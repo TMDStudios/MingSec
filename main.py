@@ -1,11 +1,22 @@
 import threading
-import winsound
+# import winsound
 
 import cv2
 from cv2 import VideoWriter
 from cv2 import VideoWriter_fourcc
 
 from time import time
+
+# Dropbox
+import pathlib
+import dropbox
+from dropbox.exceptions import AuthError
+
+from dotenv.main import load_dotenv
+import os
+
+load_dotenv()
+DROPBOX_ACCESS_TOKEN = os.environ['DROPBOX_ACCESS_TOKEN']
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -23,6 +34,44 @@ recording = False
 recording_start = 0
 file_name = 'recording.avi'
 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
+last_recording = ''
+upload_recording = False
+
+def dropbox_connect():
+    """Create a connection to Dropbox."""
+
+    try:
+        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+    except AuthError as e:
+        print('Error connecting to Dropbox with access token: ' + str(e))
+    return dbx
+
+def dropbox_upload_file(local_path, local_file, dropbox_file_path):
+    """Upload a file from the local machine to a path in the Dropbox app directory.
+
+    Args:
+        local_path (str): The path to the local file.
+        local_file (str): The name of the local file.
+        dropbox_file_path (str): The path to the file in the Dropbox app directory.
+
+    Example:
+        dropbox_upload_file('.', 'test.csv', '/stuff/test.csv')
+
+    Returns:
+        meta: The Dropbox file metadata.
+    """
+
+    try:
+        dbx = dropbox_connect()
+
+        local_file_path = pathlib.Path(local_path) / local_file
+
+        with local_file_path.open("rb") as f:
+            meta = dbx.files_upload(f.read(), dropbox_file_path, mode=dropbox.files.WriteMode("overwrite"))
+
+            return meta
+    except Exception as e:
+        print('Error uploading file to Dropbox: ' + str(e))
 
 def beep_alarm():
     global alarm
@@ -61,12 +110,15 @@ while True:
             print("stop recording")
             recording_start = 0
             recording = False
+            if len(last_recording) > 0:
+                dropbox_upload_file('.', last_recording, '/MingSec/'+last_recording)
 
     if alarm_counter > 20:
         if not alarm:
             alarm = True
             if recording_start == 0:
                 file_name = 'recording'+str(int(time() * 1000))+'.avi'
+                last_recording = file_name
                 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
                 recording = True
             recording_start = int(time() * 1000)
