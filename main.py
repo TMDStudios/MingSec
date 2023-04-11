@@ -38,6 +38,7 @@ file_name = 'recording.avi'
 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
 last_recording = ''
 upload_recording = False
+last_image_time = 0
 
 def dropbox_connect():
     try:
@@ -93,6 +94,13 @@ while True:
 
     else:
         cv2.imshow("Cam", frame)
+
+    # Save image every 60 seconds
+    if int(time()*1000) - last_image_time > 60000:
+        print("SAVE IMG")
+        last_image_time = int(time()*1000)
+        img_file_name = str(last_image_time)+'.jpg'
+        cv2.imwrite(img_file_name, frame)
     
     if recording:
         video.write(frame)
