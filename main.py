@@ -5,7 +5,7 @@ import cv2
 from cv2 import VideoWriter
 from cv2 import VideoWriter_fourcc
 
-from time import time
+from time import time, strftime, localtime
 
 # Dropbox
 import pathlib
@@ -95,12 +95,14 @@ while True:
     else:
         cv2.imshow("Cam", frame)
 
-    # Save image every 60 seconds
-    if int(time()*1000) - last_image_time > 60000:
+    # Save and upload image every 10 minutes
+    if int(time()*1000) - last_image_time > 600000:
         print("SAVE IMG")
         last_image_time = int(time()*1000)
-        img_file_name = str(last_image_time)+'.jpg'
+        img_file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
         cv2.imwrite(img_file_name, frame)
+        if len(img_file_name) > 0:
+                dropbox_upload_file('.', img_file_name, '/MingSec/'+img_file_name)
     
     if recording:
         video.write(frame)
@@ -115,7 +117,7 @@ while True:
         if not alarm:
             alarm = True
             if recording_start == 0:
-                file_name = 'recording'+str(int(time() * 1000))+'.avi'
+                file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                 last_recording = file_name
                 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
                 recording = True
