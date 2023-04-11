@@ -76,6 +76,9 @@ def beep_alarm():
 while True:
     _, frame = cap.read()
 
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(frame,strftime("%H:%M:%S", localtime()),(10,30), font, 1,(0,0,255),2,cv2.LINE_AA)
+
     if alarm_mode:
         frame_bw = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         frame_bw = cv2.GaussianBlur(frame_bw, (5, 5), 0)
