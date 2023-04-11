@@ -16,7 +16,9 @@ from dotenv.main import load_dotenv
 import os
 
 load_dotenv()
-DROPBOX_ACCESS_TOKEN = os.environ['DROPBOX_ACCESS_TOKEN']
+APP_KEY = os.environ['APP_KEY']
+APP_SECRET = os.environ['APP_SECRET']
+REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -38,29 +40,17 @@ last_recording = ''
 upload_recording = False
 
 def dropbox_connect():
-    """Create a connection to Dropbox."""
-
     try:
-        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+        dbx = dropbox.Dropbox(
+            app_key=APP_KEY,
+            app_secret=APP_SECRET,
+            oauth2_refresh_token=REFRESH_TOKEN
+        )
     except AuthError as e:
         print('Error connecting to Dropbox with access token: ' + str(e))
     return dbx
 
 def dropbox_upload_file(local_path, local_file, dropbox_file_path):
-    """Upload a file from the local machine to a path in the Dropbox app directory.
-
-    Args:
-        local_path (str): The path to the local file.
-        local_file (str): The name of the local file.
-        dropbox_file_path (str): The path to the file in the Dropbox app directory.
-
-    Example:
-        dropbox_upload_file('.', 'test.csv', '/stuff/test.csv')
-
-    Returns:
-        meta: The Dropbox file metadata.
-    """
-
     try:
         dbx = dropbox_connect()
 
