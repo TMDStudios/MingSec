@@ -38,7 +38,7 @@ file_name = 'recording.avi'
 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
 last_recording = ''
 upload_recording = False
-last_image_time = 0
+last_image_time = int(time()*1000)
 
 # Dropbox vars
 local_path = '.'
@@ -117,7 +117,9 @@ while True:
         cv2.imshow("Cam", frame)
 
     # Save and upload image every 10 minutes
-    if int(time()*1000) - last_image_time > 600000:
+    if int(time()*1000) - last_image_time > 6000:
+        # Turn on alarm mode
+        alarm_mode = True
         print("SAVE IMG")
         last_image_time = int(time()*1000)
         img_file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
