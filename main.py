@@ -40,6 +40,11 @@ last_recording = ''
 upload_recording = False
 last_image_time = 0
 
+# Dropbox vars
+local_path = '.'
+dropbox_img_path = ''
+dropbox_video_path = ''
+
 def dropbox_connect():
     try:
         dbx = dropbox.Dropbox(
@@ -51,18 +56,31 @@ def dropbox_connect():
         print('Error connecting to Dropbox with access token: ' + str(e))
     return dbx
 
-def dropbox_upload_file(local_path, local_file, dropbox_file_path):
+def dropbox_upload_img():
     try:
         dbx = dropbox_connect()
 
-        local_file_path = pathlib.Path(local_path) / local_file
+        local_file_path = pathlib.Path(local_path) / img_file_name
 
         with local_file_path.open("rb") as f:
-            meta = dbx.files_upload(f.read(), dropbox_file_path, mode=dropbox.files.WriteMode("overwrite"))
-
+            meta = dbx.files_upload(f.read(), dropbox_img_path, mode=dropbox.files.WriteMode("overwrite"))
+            print("IMAGE UPLOADED:",dropbox_img_path)
             return meta
     except Exception as e:
-        print('Error uploading file to Dropbox: ' + str(e))
+        print('Error uploading image to Dropbox: ' + str(e))
+
+def dropbox_upload_video():
+    try:
+        dbx = dropbox_connect()
+
+        local_file_path = pathlib.Path(local_path) / last_recording
+
+        with local_file_path.open("rb") as f:
+            meta = dbx.files_upload(f.read(), dropbox_video_path, mode=dropbox.files.WriteMode("overwrite"))
+            print("VIDEO UPLOADED:",dropbox_video_path)
+            return meta
+    except Exception as e:
+        print('Error uploading video to Dropbox: ' + str(e))
 
 def beep_alarm():
     global alarm
@@ -105,7 +123,8 @@ while True:
         img_file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
         cv2.imwrite(img_file_name, frame)
         if len(img_file_name) > 0:
-                dropbox_upload_file('.', img_file_name, '/MingSec/'+img_file_name)
+            dropbox_img_path = '/MingSec/'+img_file_name
+            threading.Thread(target=dropbox_upload_img).start()
     
     if recording:
         video.write(frame)
@@ -114,12 +133,20 @@ while True:
             recording_start = 0
             recording = False
             if len(last_recording) > 0:
-                dropbox_upload_file('.', last_recording, '/MingSec/'+last_recording)
+                dropbox_video_path = '/MingSec/'+last_recording
+                threading.Thread(target=dropbox_upload_video).start()
 
     if alarm_counter > 20:
         if not alarm:
             alarm = True
             if recording_start == 0:
+                # Alarm Image
+                img_file_name = strftime("ALARM%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                cv2.imwrite(img_file_name, frame)
+                if len(img_file_name) > 0:
+                    dropbox_img_path = '/MingSec/'+img_file_name
+                    threading.Thread(target=dropbox_upload_img).start()
+
                 file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                 last_recording = file_name
                 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
