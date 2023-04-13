@@ -15,10 +15,14 @@ from dropbox.exceptions import AuthError
 from dotenv.main import load_dotenv
 import os
 
+import requests
+import json
+
 load_dotenv()
 APP_KEY = os.environ['APP_KEY']
 APP_SECRET = os.environ['APP_SECRET']
 REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
+CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -44,6 +48,12 @@ last_image_time = int(time()*1000)
 local_path = '.'
 dropbox_img_path = ''
 dropbox_video_path = ''
+
+last_img_upload_time = 0
+last_vid_upload_time = 0
+
+# Check for recording requests
+last_request = int(time()*1000)
 
 def dropbox_connect():
     try:
@@ -91,6 +101,26 @@ def beep_alarm():
         # winsound.Beep(2500, 1000)
     alarm = False
 
+def check_requests():
+    global last_img_upload_time, last_vid_upload_time
+    print("CHECKING FOR REQUESTS")
+    req = requests.get(CAM_REQUEST_ENDPOINT)
+    request_dict = json.loads(req.content)
+    if len(request_dict)>0:
+        request_data = request_dict[-1]
+        print(request_data)
+        if request_data['time']>last_img_upload_time:
+            last_img_upload_time = int(time()*1000)
+            print("GET NEW IMG")
+        else:
+            print("NO NEED TO GET IMG")
+
+        if request_data['time']>last_vid_upload_time:
+            last_vid_upload_time = int(time()*1000)
+            print("GET NEW VIDEO")
+        else:
+            print("NO NEED TO GET VIDEO")
+
 while True:
     _, frame = cap.read()
 
@@ -116,8 +146,13 @@ while True:
     else:
         cv2.imshow("Cam", frame)
 
+    # Check for requests
+    if int(time()*1000) - last_request > 5000:
+        last_request = int(time()*1000)
+        threading.Thread(target=check_requests).start()
+
     # Save and upload image every 10 minutes
-    if int(time()*1000) - last_image_time > 6000:
+    if int(time()*1000) - last_image_time > 600000:
         # Turn on alarm mode
         alarm_mode = True
         print("SAVE IMG")
@@ -126,6 +161,7 @@ while True:
         cv2.imwrite(img_file_name, frame)
         if len(img_file_name) > 0:
             dropbox_img_path = '/MingSec/'+img_file_name
+            last_img_upload_time = int(time()*1000)
             threading.Thread(target=dropbox_upload_img).start()
     
     if recording:
@@ -136,6 +172,7 @@ while True:
             recording = False
             if len(last_recording) > 0:
                 dropbox_video_path = '/MingSec/'+last_recording
+                last_vid_upload_time = int(time()*1000)
                 threading.Thread(target=dropbox_upload_video).start()
 
     if alarm_counter > 20:
@@ -147,6 +184,7 @@ while True:
                 cv2.imwrite(img_file_name, frame)
                 if len(img_file_name) > 0:
                     dropbox_img_path = '/MingSec/'+img_file_name
+                    last_img_upload_time = int(time()*1000)
                     threading.Thread(target=dropbox_upload_img).start()
 
                 file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
