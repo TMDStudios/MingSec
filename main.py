@@ -37,6 +37,7 @@ alarm_mode = False
 alarm_counter = 0
 
 recording = False
+video_length = 10000
 recording_start = 0
 file_name = 'recording.avi'
 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
@@ -49,8 +50,8 @@ local_path = '.'
 dropbox_img_path = ''
 dropbox_video_path = ''
 
-last_img_upload_time = 0
-last_vid_upload_time = 0
+last_img_upload_time = int(time()*1000)
+last_vid_upload_time = int(time()*1000)
 
 # Check for recording requests
 last_request = int(time()*1000)
@@ -103,7 +104,7 @@ def beep_alarm():
 
 def check_requests():
     try:
-        global last_img_upload_time, last_vid_upload_time, dropbox_img_path, img_file_name
+        global last_img_upload_time, last_vid_upload_time, dropbox_img_path, img_file_name, last_recording, video, recording, recording_start, video_length
         print("CHECKING FOR REQUESTS")
         req = requests.get(CAM_REQUEST_ENDPOINT)
         request_dict = json.loads(req.content)
@@ -123,11 +124,19 @@ def check_requests():
                             dropbox_img_path = '/MingSec/'+img_file_name
                             threading.Thread(target=dropbox_upload_img).start()
 
-                # if request_data['time']>last_vid_upload_time:
-                #     last_vid_upload_time = int(time()*1000)
-                #     print("GET NEW VIDEO")
-                # else:
-                #     print("NO NEED TO GET VIDEO")
+                if request_data['type']=='video':
+                    print("req time: ",request_data['time'])
+                    print("LAST time: ",last_vid_upload_time)
+                    if request_data['time']>last_vid_upload_time:
+                        video_length = request_data['length']
+                        last_vid_upload_time = int(time()*1000)
+                        print("VIDEO REQUESTED")
+                        file_name = strftime("REQUESTED%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
+                        last_recording = file_name
+                        video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
+                        recording_start = int(time() * 1000)
+                        recording = True
+
     except Exception as e:
         print('Unable to connect to API: ' + str(e))
 
@@ -157,7 +166,7 @@ while True:
         cv2.imshow("Cam", frame)
 
     # Check for requests
-    if int(time()*1000) - last_request > 5000:
+    if int(time()*1000) - last_request > 10000:
         last_request = int(time()*1000)
         threading.Thread(target=check_requests).start()
 
@@ -171,18 +180,21 @@ while True:
         cv2.imwrite(img_file_name, frame)
         if len(img_file_name) > 0:
             dropbox_img_path = '/MingSec/'+img_file_name
-            last_img_upload_time = int(time()*1000)
             threading.Thread(target=dropbox_upload_img).start()
     
     if recording:
         video.write(frame)
-        if int(time() * 1000) - recording_start > 5000:
+        if int(time() * 1000) - recording_start > video_length:
             print("stop recording")
+            video_length = 10000
             recording_start = 0
             recording = False
             if len(last_recording) > 0:
+                # Release last recording
+                file_name = 'recording.avi'
+                video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
+
                 dropbox_video_path = '/MingSec/'+last_recording
-                last_vid_upload_time = int(time()*1000)
                 threading.Thread(target=dropbox_upload_video).start()
 
     if alarm_counter > 20:
@@ -194,7 +206,6 @@ while True:
                 cv2.imwrite(img_file_name, frame)
                 if len(img_file_name) > 0:
                     dropbox_img_path = '/MingSec/'+img_file_name
-                    last_img_upload_time = int(time()*1000)
                     threading.Thread(target=dropbox_upload_img).start()
 
                 file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
