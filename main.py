@@ -102,24 +102,34 @@ def beep_alarm():
     alarm = False
 
 def check_requests():
-    global last_img_upload_time, last_vid_upload_time
-    print("CHECKING FOR REQUESTS")
-    req = requests.get(CAM_REQUEST_ENDPOINT)
-    request_dict = json.loads(req.content)
-    if len(request_dict)>0:
-        request_data = request_dict[-1]
-        print(request_data)
-        if request_data['time']>last_img_upload_time:
-            last_img_upload_time = int(time()*1000)
-            print("GET NEW IMG")
-        else:
-            print("NO NEED TO GET IMG")
+    try:
+        global last_img_upload_time, last_vid_upload_time, dropbox_img_path, img_file_name
+        print("CHECKING FOR REQUESTS")
+        req = requests.get(CAM_REQUEST_ENDPOINT)
+        request_dict = json.loads(req.content)
+        if len(request_dict)>0:
+            request_data = request_dict[-1]
+            print(request_data)
 
-        if request_data['time']>last_vid_upload_time:
-            last_vid_upload_time = int(time()*1000)
-            print("GET NEW VIDEO")
-        else:
-            print("NO NEED TO GET VIDEO")
+            if request_data['camera']=='pc':
+                if request_data['type']=='image':
+
+                    if request_data['time']>last_img_upload_time:
+                        last_img_upload_time = int(time()*1000)
+                        print("IMAGE REQUESTED")
+                        img_file_name = strftime("REQUESTED%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                        cv2.imwrite(img_file_name, frame)
+                        if len(img_file_name) > 0:
+                            dropbox_img_path = '/MingSec/'+img_file_name
+                            threading.Thread(target=dropbox_upload_img).start()
+
+                # if request_data['time']>last_vid_upload_time:
+                #     last_vid_upload_time = int(time()*1000)
+                #     print("GET NEW VIDEO")
+                # else:
+                #     print("NO NEED TO GET VIDEO")
+    except Exception as e:
+        print('Unable to connect to API: ' + str(e))
 
 while True:
     _, frame = cap.read()
