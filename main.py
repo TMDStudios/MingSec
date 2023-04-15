@@ -23,6 +23,7 @@ APP_KEY = os.environ['APP_KEY']
 APP_SECRET = os.environ['APP_SECRET']
 REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
 CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
+ALARM_REPORT_ENDPOINT = os.environ['ALARM_REPORT_ENDPOINT']
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -101,6 +102,12 @@ def beep_alarm():
         print("ALARM...",i)
         # winsound.Beep(2500, 1000)
     alarm = False
+
+def report_alarm():
+    global ALARM_REPORT_ENDPOINT
+    r = requests.post(ALARM_REPORT_ENDPOINT, json={'camera':'PC'})
+
+    print("ALARM REPORT SENT", r.text)
 
 def check_requests():
     try:
@@ -201,6 +208,7 @@ while True:
         if not alarm:
             alarm = True
             if recording_start == 0:
+                threading.Thread(target=report_alarm).start()
                 # Alarm Image
                 img_file_name = strftime("ALARM%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                 cv2.imwrite(img_file_name, frame)
