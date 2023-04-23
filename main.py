@@ -24,6 +24,7 @@ APP_SECRET = os.environ['APP_SECRET']
 REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
 CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
 ALARM_REPORT_ENDPOINT = os.environ['ALARM_REPORT_ENDPOINT']
+STATUS_REPORT_ENDPOINT = os.environ['STATUS_REPORT_ENDPOINT']
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -53,6 +54,7 @@ dropbox_video_path = ''
 
 last_img_upload_time = int(time()*1000)
 last_vid_upload_time = int(time()*1000)
+last_status_report = int(time()*1000)
 
 # Check for recording requests
 last_request = int(time()*1000)
@@ -109,9 +111,15 @@ def report_alarm():
 
     print("ALARM REPORT SENT", r.text)
 
+def report_status():
+    global STATUS_REPORT_ENDPOINT
+    r = requests.post(STATUS_REPORT_ENDPOINT, json={'camera':'PC', 'status':'OK'})
+
+    print("STATUS REPORT SENT", r.text)
+
 def check_requests():
     try:
-        global last_img_upload_time, last_vid_upload_time, dropbox_img_path, img_file_name, last_recording, video, recording, recording_start, video_length
+        global last_img_upload_time, last_vid_upload_time, last_status_report, dropbox_img_path, img_file_name, last_recording, video, recording, recording_start, video_length
         print("CHECKING FOR REQUESTS")
         req = requests.get(CAM_REQUEST_ENDPOINT)
         request_dict = json.loads(req.content)
@@ -119,8 +127,8 @@ def check_requests():
             request_data = request_dict[-1]
             print(request_data)
 
-            if request_data['camera']=='pc':
-                if request_data['type']=='image':
+            if request_data['camera'].lower()=='pc':
+                if request_data['type'].lower()=='image':
 
                     if request_data['time']>last_img_upload_time:
                         last_img_upload_time = int(time()*1000)
@@ -131,9 +139,7 @@ def check_requests():
                             dropbox_img_path = '/MingSec/'+img_file_name
                             threading.Thread(target=dropbox_upload_img).start()
 
-                if request_data['type']=='video':
-                    print("req time: ",request_data['time'])
-                    print("LAST time: ",last_vid_upload_time)
+                if request_data['type'].lower()=='video':
                     if request_data['time']>last_vid_upload_time:
                         video_length = request_data['length']
                         last_vid_upload_time = int(time()*1000)
@@ -143,6 +149,12 @@ def check_requests():
                         video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
                         recording_start = int(time() * 1000)
                         recording = True
+
+                if request_data['type'].lower()=='status':
+                    if request_data['time']>last_status_report:
+                        print("STATUS REQUESTED")
+                        last_status_report = int(time()*1000)
+                        report_status()
 
     except Exception as e:
         print('Unable to connect to API: ' + str(e))
