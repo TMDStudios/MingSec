@@ -22,6 +22,7 @@ load_dotenv()
 APP_KEY = os.environ['APP_KEY']
 APP_SECRET = os.environ['APP_SECRET']
 REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
+# REFRESH_TOKEN = "faketoken"
 CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
 ALARM_REPORT_ENDPOINT = os.environ['ALARM_REPORT_ENDPOINT']
 STATUS_REPORT_ENDPOINT = os.environ['STATUS_REPORT_ENDPOINT']
@@ -51,6 +52,7 @@ last_image_time = int(time()*1000)
 local_path = '.'
 dropbox_img_path = ''
 dropbox_video_path = ''
+unsentItems = []
 
 last_img_upload_time = int(time()*1000)
 last_vid_upload_time = int(time()*1000)
@@ -71,6 +73,7 @@ def dropbox_connect():
     return dbx
 
 def dropbox_upload_img():
+    global unsentItems
     try:
         dbx = dropbox_connect()
 
@@ -81,9 +84,11 @@ def dropbox_upload_img():
             print("IMAGE UPLOADED:",dropbox_img_path)
             return meta
     except Exception as e:
+        unsentItems.append(local_file_path)
         print('Error uploading image to Dropbox: ' + str(e))
 
 def dropbox_upload_video():
+    global unsentItems
     try:
         dbx = dropbox_connect()
 
@@ -94,6 +99,7 @@ def dropbox_upload_video():
             print("VIDEO UPLOADED:",dropbox_video_path)
             return meta
     except Exception as e:
+        unsentItems.append(local_file_path)
         print('Error uploading video to Dropbox: ' + str(e))
 
 def beep_alarm():
@@ -141,7 +147,7 @@ def check_requests():
 
                 if request_data['type'].lower()=='video':
                     if request_data['time']>last_vid_upload_time:
-                        video_length = request_data['length']
+                        video_length = request_data['length']*1000
                         last_vid_upload_time = int(time()*1000)
                         print("VIDEO REQUESTED")
                         file_name = strftime("REQUESTED%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
@@ -241,6 +247,11 @@ while True:
         alarm_counter = 0
 
     if key_pressed == ord("q"):
+        if len(unsentItems) > 0:
+            f= open(strftime("UnsentItems%Y-%m-%d_%H-%M-%S", localtime())+".txt","w+")
+            for i in unsentItems:
+                f.write(str(i)+"\n")
+            f.close()
         alarm_mode = False
         break
 
