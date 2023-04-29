@@ -135,16 +135,18 @@ def beep_alarm():
     alarm = False
 
 def report_alarm():
-    global ALARM_REPORT_ENDPOINT
-    r = requests.post(ALARM_REPORT_ENDPOINT, json={'camera':'PC'})
-
-    print("ALARM REPORT SENT", r.text)
+    try:
+        r = requests.post(ALARM_REPORT_ENDPOINT, json={'camera':'PC'})
+        print("ALARM REPORT SENT", r.text)
+    except Exception as e:
+        print("UNABLE TO SEND ALARM REPORT... ", e)
 
 def report_status():
-    global STATUS_REPORT_ENDPOINT
-    r = requests.post(STATUS_REPORT_ENDPOINT, json={'camera':'PC', 'status':'OK'})
-
-    print("STATUS REPORT SENT", r.text)
+    try:
+        r = requests.post(STATUS_REPORT_ENDPOINT, json={'camera':'PC', 'status':'OK'})
+        print("STATUS REPORT SENT", r.text)
+    except Exception as e:
+        print("UNABLE TO SEND STATUS REPORT... ", e)  
 
 def check_requests():
     try:
