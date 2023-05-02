@@ -164,7 +164,7 @@ def check_requests():
                     if request_data['time']>last_img_upload_time:
                         last_img_upload_time = int(time()*1000)
                         print("IMAGE REQUESTED")
-                        img_file_name = strftime("REQUESTED%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                        img_file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                         cv2.imwrite(img_file_name, frame)
                         if len(img_file_name) > 0:
                             dropbox_img_path = '/MingSec/'+img_file_name
@@ -175,7 +175,7 @@ def check_requests():
                         video_length = request_data['length']*1000
                         last_vid_upload_time = int(time()*1000)
                         print("VIDEO REQUESTED")
-                        file_name = strftime("REQUESTED%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
+                        file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                         last_recording = file_name
                         video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
                         recording_start = int(time() * 1000)
@@ -226,7 +226,7 @@ while True:
         alarm_mode = True
         print("SAVE IMG")
         last_image_time = int(time()*1000)
-        img_file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+        img_file_name = strftime("PC_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
         cv2.imwrite(img_file_name, frame)
         if len(img_file_name) > 0:
             dropbox_img_path = '/MingSec/'+img_file_name
@@ -253,13 +253,13 @@ while True:
             if recording_start == 0:
                 threading.Thread(target=report_alarm).start()
                 # Alarm Image
-                img_file_name = strftime("ALARM%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                img_file_name = strftime("PC_ALARM_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                 cv2.imwrite(img_file_name, frame)
                 if len(img_file_name) > 0:
                     dropbox_img_path = '/MingSec/'+img_file_name
                     threading.Thread(target=dropbox_upload_img).start()
 
-                file_name = strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
+                file_name = strftime("PC_ALARM_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                 last_recording = file_name
                 video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
                 recording = True
