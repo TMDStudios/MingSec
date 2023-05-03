@@ -1,5 +1,6 @@
 import threading
 # import winsound
+import subprocess
 
 import cv2
 from cv2 import VideoWriter
@@ -25,6 +26,8 @@ REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
 CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
 ALARM_REPORT_ENDPOINT = os.environ['ALARM_REPORT_ENDPOINT']
 STATUS_REPORT_ENDPOINT = os.environ['STATUS_REPORT_ENDPOINT']
+EXTERNAL_DEVICE_NAME = os.environ['EXTERNAL_DEVICE_NAME']
+EXTERNAL_DEVICE_PATH = os.environ['EXTERNAL_DEVICE_PATH']
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -189,6 +192,10 @@ def check_requests():
 
     except Exception as e:
         print('Unable to connect to API: ' + str(e))
+
+# Capture image on external device
+command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", "source", "venv/bin/activate && ", "python3", "CapImage.py"]
+subprocess.run(command)
 
 while True:
     _, frame = cap.read()
