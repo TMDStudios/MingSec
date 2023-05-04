@@ -65,6 +65,12 @@ last_status_report = int(time()*1000)
 # Check for recording requests
 last_request = int(time()*1000)
 
+# External Device
+external_image = ''
+external_video = ''
+external_status = ''
+external_request_delay = 0
+
 def dropbox_connect():
     try:
         dbx = dropbox.Dropbox(
@@ -153,27 +159,56 @@ def report_status():
 
 def check_requests():
     try:
-        global last_img_upload_time, last_vid_upload_time, last_status_report, dropbox_img_path, img_file_name, last_recording, video, recording, recording_start, video_length
+        global last_img_upload_time, last_vid_upload_time, last_status_report, dropbox_img_path, img_file_name, last_recording, video, recording
+        global recording_start, video_length, external_image, external_video, external_status, external_request_delay
         print("CHECKING FOR REQUESTS")
+
+        if len(external_image) > 0:
+            if external_request_delay < 3:
+                external_request_delay += 1
+            elif external_request_delay == 3:
+                external_request_delay += 1
+                # Rename image
+                print("RENAMING IMAGE")
+                command = [
+                    "ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ",
+                    "mv", "ImageSSH.jpg "+external_image]
+                subprocess.run(command)
+            else:
+                external_request_delay = 0
+                # Transfer to local device
+                print("FETCHING EXT IMAGE")
+                command = ["scp", EXTERNAL_DEVICE_NAME+":"+EXTERNAL_DEVICE_PATH+"/"+external_image, "."]
+                subprocess.run(command)
+                external_image = ''
+
         req = requests.get(CAM_REQUEST_ENDPOINT)
         request_dict = json.loads(req.content)
         if len(request_dict)>0:
             request_data = request_dict[-1]
             print(request_data)
 
-            if request_data['camera'].lower()=='pc':
+            if request_data['camera'].lower()=='pc' or request_data['camera'].lower()=='external':
                 if request_data['type'].lower()=='image':
 
                     if request_data['time']>last_img_upload_time:
                         last_img_upload_time = int(time()*1000)
-                        print("IMAGE REQUESTED")
-                        img_file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
-                        cv2.imwrite(img_file_name, frame)
-                        if len(img_file_name) > 0:
-                            dropbox_img_path = '/MingSec/'+img_file_name
-                            threading.Thread(target=dropbox_upload_img).start()
+                        if request_data['camera'].lower()=='external':
+                            print("EXT IMAGE REQUESTED")
+                            external_image = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                            # Capture image on external device
+                            command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", "source", "venv/bin/activate && ", "python3", "CapImage.py"]
+                            subprocess.run(command)
+                        else:
+                            print("IMAGE REQUESTED")
+                            img_file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                            cv2.imwrite(img_file_name, frame)
+                            if len(img_file_name) > 0:
+                                dropbox_img_path = '/MingSec/'+img_file_name
+                                threading.Thread(target=dropbox_upload_img).start()
 
                 if request_data['type'].lower()=='video':
+
                     if request_data['time']>last_vid_upload_time:
                         video_length = request_data['length']*1000
                         last_vid_upload_time = int(time()*1000)
@@ -185,6 +220,7 @@ def check_requests():
                         recording = True
 
                 if request_data['type'].lower()=='status':
+
                     if request_data['time']>last_status_report:
                         print("STATUS REQUESTED")
                         last_status_report = int(time()*1000)
@@ -192,10 +228,6 @@ def check_requests():
 
     except Exception as e:
         print('Unable to connect to API: ' + str(e))
-
-# Capture image on external device
-command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", "source", "venv/bin/activate && ", "python3", "CapImage.py"]
-subprocess.run(command)
 
 while True:
     _, frame = cap.read()
