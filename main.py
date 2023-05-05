@@ -170,9 +170,7 @@ def check_requests():
                 external_request_delay += 1
                 # Rename image
                 print("RENAMING IMAGE")
-                command = [
-                    "ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ",
-                    "mv", "ImageSSH.jpg "+external_image]
+                command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", "mv", "ImageSSH.jpg "+external_image+" && ", "exit"]
                 subprocess.run(command)
             else:
                 external_request_delay = 0
@@ -197,7 +195,9 @@ def check_requests():
                             print("EXT IMAGE REQUESTED")
                             external_image = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                             # Capture image on external device
-                            command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", "source", "venv/bin/activate && ", "python3", "CapImage.py"]
+                            command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", 
+                                       "source", "venv/bin/activate && ", "python3", "CapImage.py"+" && ", 
+                                       "exit"]
                             subprocess.run(command)
                         else:
                             print("IMAGE REQUESTED")
