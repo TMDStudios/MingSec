@@ -55,8 +55,8 @@ last_image_time = int(time()*1000)
 local_path = '.'
 dropbox_img_path = ''
 dropbox_video_path = ''
-unsentImages = []
-unsentVideos = []
+unsent_images = []
+unsent_videos = []
 
 last_img_upload_time = int(time()*1000)
 last_vid_upload_time = int(time()*1000)
@@ -83,19 +83,19 @@ def dropbox_connect():
     return dbx
 
 def dropbox_upload_img():
-    global unsentImages
+    global unsent_images
     try:
         dbx = dropbox_connect()
 
-        if len(unsentImages) > 0:
-            print("UPLOADING ",len(unsentImages)," UNSENT IMAGES")
-            for i in unsentImages:
+        if len(unsent_images) > 0:
+            print("UPLOADING ",len(unsent_images)," UNSENT IMAGES")
+            for i in unsent_images:
                 local_file_path = pathlib.Path(local_path) / str(i)
                 with local_file_path.open("rb") as f:
                     dpx_path = '/MingSec/'+str(i)
                     meta = dbx.files_upload(f.read(), dpx_path, mode=dropbox.files.WriteMode("overwrite"))
                     print("IMAGE UPLOADED:",dropbox_img_path)
-            unsentImages.clear()
+            unsent_images.clear()
 
         local_file_path = pathlib.Path(local_path) / img_file_name
 
@@ -105,23 +105,23 @@ def dropbox_upload_img():
             return meta
     except Exception as e:
         local_file_path = pathlib.Path(local_path) / img_file_name
-        unsentImages.append(local_file_path)
+        unsent_images.append(local_file_path)
         print('Error uploading image to Dropbox: ' + str(e))
 
 def dropbox_upload_video():
-    global unsentVideos
+    global unsent_videos
     try:
         dbx = dropbox_connect()
 
-        if len(unsentVideos) > 0:
-            print("UPLOADING ",len(unsentVideos)," UNSENT VIDEOS")
-            for i in unsentVideos:
+        if len(unsent_videos) > 0:
+            print("UPLOADING ",len(unsent_videos)," UNSENT VIDEOS")
+            for i in unsent_videos:
                 local_file_path = pathlib.Path(local_path) / str(i)
                 with local_file_path.open("rb") as f:
                     dpx_path = '/MingSec/'+str(i)
                     meta = dbx.files_upload(f.read(), dpx_path, mode=dropbox.files.WriteMode("overwrite"))
                     print("VIDEO UPLOADED:",dropbox_video_path)
-            unsentVideos.clear()
+            unsent_videos.clear()
 
         local_file_path = pathlib.Path(local_path) / last_recording
 
@@ -131,7 +131,7 @@ def dropbox_upload_video():
             return meta
     except Exception as e:
         local_file_path = pathlib.Path(local_path) / last_recording
-        unsentVideos.append(local_file_path)
+        unsent_videos.append(local_file_path)
         print('Error uploading video to Dropbox: ' + str(e))
 
 def beep_alarm():
@@ -158,9 +158,10 @@ def report_status():
         print("UNABLE TO SEND STATUS REPORT... ", e)  
 
 def check_requests():
+    # print("THREADS: ", threading.active_count())
     try:
         global last_img_upload_time, last_vid_upload_time, last_status_report, dropbox_img_path, img_file_name, last_recording, video, recording
-        global recording_start, video_length, external_image, external_video, external_status, external_request_delay
+        global recording_start, video_length, external_image, external_video, external_status, external_request_delay, unsent_images
         print("CHECKING FOR REQUESTS")
 
         if len(external_image) > 0:
@@ -178,6 +179,7 @@ def check_requests():
                 print("FETCHING EXT IMAGE")
                 command = ["scp", EXTERNAL_DEVICE_NAME+":"+EXTERNAL_DEVICE_PATH+"/"+external_image, "."]
                 subprocess.run(command)
+                unsent_images.append(external_image)
                 external_image = ''
 
         req = requests.get(CAM_REQUEST_ENDPOINT)
