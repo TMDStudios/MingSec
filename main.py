@@ -182,6 +182,24 @@ def check_requests():
                 unsent_images.append(external_image)
                 external_image = ''
 
+        if len(external_video) > 0:
+            if external_request_delay < 6:
+                external_request_delay += 1
+            elif external_request_delay == 6:
+                external_request_delay += 1
+                # Rename video
+                print("RENAMING VIDEO")
+                command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", "mv", "VideoSSH.avi "+external_video+" && ", "exit"]
+                subprocess.run(command)
+            else:
+                external_request_delay = 0
+                # Transfer to local device
+                print("FETCHING EXT VIDEO")
+                command = ["scp", EXTERNAL_DEVICE_NAME+":"+EXTERNAL_DEVICE_PATH+"/"+external_video, "."]
+                subprocess.run(command)
+                unsent_videos.append(external_video)
+                external_video = ''
+
         req = requests.get(CAM_REQUEST_ENDPOINT)
         request_dict = json.loads(req.content)
         if len(request_dict)>0:
@@ -212,14 +230,23 @@ def check_requests():
                 if request_data['type'].lower()=='video':
 
                     if request_data['time']>last_vid_upload_time:
-                        video_length = request_data['length']*1000
                         last_vid_upload_time = int(time()*1000)
-                        print("VIDEO REQUESTED")
-                        file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
-                        last_recording = file_name
-                        video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
-                        recording_start = int(time() * 1000)
-                        recording = True
+                        if request_data['camera'].lower()=='external':
+                            print("EXT VIDEO REQUESTED")
+                            external_video = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
+                            # Capture video on external device
+                            command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", 
+                                       "source", "venv/bin/activate && ", "python3", "CapVideo.py"+" && ", 
+                                       "exit"]
+                            subprocess.run(command)
+                        else:
+                            last_vid_upload_time = int(time()*1000)
+                            print("VIDEO REQUESTED")
+                            file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
+                            last_recording = file_name
+                            video = cv2.VideoWriter(file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
+                            recording_start = int(time() * 1000)
+                            recording = True
 
                 if request_data['type'].lower()=='status':
 
