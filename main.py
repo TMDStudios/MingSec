@@ -161,7 +161,7 @@ def check_requests():
     # print("THREADS: ", threading.active_count())
     try:
         global last_img_upload_time, last_vid_upload_time, last_status_report, dropbox_img_path, img_file_name, last_recording, video, recording
-        global recording_start, video_length, external_image, external_video, external_status, external_request_delay, unsent_images
+        global recording_start, video_length, external_image, external_video, external_status, external_request_delay, unsent_images, unsent_videos
         print("CHECKING FOR REQUESTS")
 
         if len(external_image) > 0:
