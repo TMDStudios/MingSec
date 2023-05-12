@@ -150,9 +150,9 @@ def report_alarm():
     except Exception as e:
         print("UNABLE TO SEND ALARM REPORT... ", e)
 
-def report_status():
+def report_status(temperature):
     try:
-        r = requests.post(STATUS_REPORT_ENDPOINT, json={'camera':'PC', 'status':'OK'})
+        r = requests.post(STATUS_REPORT_ENDPOINT, json={'camera':'PC', 'status':temperature})
         print("STATUS REPORT SENT", r.text)
     except Exception as e:
         print("UNABLE TO SEND STATUS REPORT... ", e)  
@@ -251,9 +251,18 @@ def check_requests():
                 if request_data['type'].lower()=='status':
 
                     if request_data['time']>last_status_report:
-                        print("STATUS REQUESTED")
                         last_status_report = int(time()*1000)
-                        report_status()
+                        if request_data['camera'].lower()=='external':
+                            print("EXT STATUS REQUESTED")
+                            command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", 
+                                       "cat", "/sys/class/thermal/thermal_zone*/temp && ", 
+                                       "exit"]
+                            sub_output = subprocess.check_output(command, shell=False)
+                            ext_report = "EXT TEMP:", str(sub_output)
+                            report_status(ext_report)
+                        else:
+                            print("STATUS REQUESTED")
+                            report_status("OK")
 
     except Exception as e:
         print('Unable to connect to API: ' + str(e))
