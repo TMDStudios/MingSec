@@ -150,9 +150,9 @@ def report_alarm():
     except Exception as e:
         print("UNABLE TO SEND ALARM REPORT... ", e)
 
-def report_status(temperature):
+def report_status(camera, temperature):
     try:
-        r = requests.post(STATUS_REPORT_ENDPOINT, json={'camera':'PC', 'status':temperature})
+        r = requests.post(STATUS_REPORT_ENDPOINT, json={'camera':camera, 'status':temperature})
         print("STATUS REPORT SENT", r.text)
     except Exception as e:
         print("UNABLE TO SEND STATUS REPORT... ", e)  
@@ -259,10 +259,10 @@ def check_requests():
                                        "exit"]
                             sub_output = subprocess.check_output(command, shell=False)
                             ext_report = "EXT TEMP:", str(sub_output)
-                            report_status(ext_report)
+                            report_status("EXT", ext_report)
                         else:
                             print("STATUS REQUESTED")
-                            report_status("OK")
+                            report_status("PC", "OK")
 
     except Exception as e:
         print('Unable to connect to API: ' + str(e))
