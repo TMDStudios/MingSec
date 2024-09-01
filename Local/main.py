@@ -10,8 +10,9 @@ from time import time, strftime, localtime
 
 # Dropbox
 import pathlib
-import dropbox
-from dropbox.exceptions import AuthError
+from dropbox_handler import DropboxHandler
+# import dropbox
+# from dropbox.exceptions import AuthError
 
 from dotenv.main import load_dotenv
 import os
@@ -20,9 +21,9 @@ import requests
 import json
 
 load_dotenv()
-APP_KEY = os.environ['APP_KEY']
-APP_SECRET = os.environ['APP_SECRET']
-REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
+DROPBOX_APP_KEY = os.environ['DROPBOX_APP_KEY']
+DROPBOX_APP_SECRET = os.environ['DROPBOX_APP_SECRET']
+DROPBOX_REFRESH_TOKEN = os.environ['DROPBOX_REFRESH_TOKEN']
 CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
 ALARM_REPORT_ENDPOINT = os.environ['ALARM_REPORT_ENDPOINT']
 STATUS_REPORT_ENDPOINT = os.environ['STATUS_REPORT_ENDPOINT']
@@ -71,68 +72,44 @@ external_video = ''
 external_status = ''
 external_request_delay = 0
 
-def dropbox_connect():
-    try:
-        dbx = dropbox.Dropbox(
-            app_key=APP_KEY,
-            app_secret=APP_SECRET,
-            oauth2_refresh_token=REFRESH_TOKEN
-        )
-    except AuthError as e:
-        print('Error connecting to Dropbox with access token: ' + str(e))
-    return dbx
-
 def dropbox_upload_img():
     global unsent_images
-    try:
-        dbx = dropbox_connect()
+    dropbox_handler = DropboxHandler(DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REFRESH_TOKEN)
 
+    if dropbox_handler:
         if len(unsent_images) > 0:
             print("UPLOADING ",len(unsent_images)," UNSENT IMAGES")
             for i in unsent_images:
                 local_file_path = pathlib.Path(local_path) / str(i)
-                with local_file_path.open("rb") as f:
-                    dpx_path = '/MingSec/'+str(i)
-                    meta = dbx.files_upload(f.read(), dpx_path, mode=dropbox.files.WriteMode("overwrite"))
-                    print("IMAGE UPLOADED:",dropbox_img_path)
+                dpx_path = '/MingSec/'+str(i)
+                dropbox_handler.upload_file(str(local_file_path), dpx_path)
             unsent_images.clear()
 
         local_file_path = pathlib.Path(local_path) / img_file_name
-
-        with local_file_path.open("rb") as f:
-            meta = dbx.files_upload(f.read(), dropbox_img_path, mode=dropbox.files.WriteMode("overwrite"))
-            print("IMAGE UPLOADED:",dropbox_img_path)
-            return meta
-    except Exception as e:
+        dropbox_handler.upload_file(str(local_file_path), dropbox_img_path)
+    else:
         local_file_path = pathlib.Path(local_path) / img_file_name
         unsent_images.append(local_file_path)
-        print('Error uploading image to Dropbox: ' + str(e))
+        print('Error uploading image to Dropbox:', local_file_path)
 
 def dropbox_upload_video():
     global unsent_videos
-    try:
-        dbx = dropbox_connect()
+    dropbox_handler = DropboxHandler(DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REFRESH_TOKEN)
 
+    if dropbox_handler:
         if len(unsent_videos) > 0:
             print("UPLOADING ",len(unsent_videos)," UNSENT VIDEOS")
             for i in unsent_videos:
                 local_file_path = pathlib.Path(local_path) / str(i)
-                with local_file_path.open("rb") as f:
-                    dpx_path = '/MingSec/'+str(i)
-                    meta = dbx.files_upload(f.read(), dpx_path, mode=dropbox.files.WriteMode("overwrite"))
-                    print("VIDEO UPLOADED:",dropbox_video_path)
-            unsent_videos.clear()
+                dpx_path = '/MingSec/'+str(i)
+                dropbox_handler.upload_file(str(local_file_path), dpx_path)
 
-        local_file_path = pathlib.Path(local_path) / last_recording
-
-        with local_file_path.open("rb") as f:
-            meta = dbx.files_upload(f.read(), dropbox_video_path, mode=dropbox.files.WriteMode("overwrite"))
-            print("VIDEO UPLOADED:",dropbox_video_path)
-            return meta
-    except Exception as e:
+        local_file_path = pathlib.Path(local_path) / img_file_name
+        dropbox_handler.upload_file(str(local_file_path), dropbox_video_path)
+    else:
         local_file_path = pathlib.Path(local_path) / last_recording
         unsent_videos.append(local_file_path)
-        print('Error uploading video to Dropbox: ' + str(e))
+        print('Error uploading video to Dropbox:', local_file_path)
 
 def beep_alarm():
     global alarm
