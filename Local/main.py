@@ -193,7 +193,7 @@ def check_requests():
                             external_image = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                             # Capture image on external device
                             command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", 
-                                       "source", "venv/bin/activate && ", "python3", "CapImage.py"+" && ", 
+                                       "source", "venv/bin/activate && ", "python3", "cap_image.py"+" && ", 
                                        "exit"]
                             subprocess.run(command)
                         else:
@@ -213,7 +213,7 @@ def check_requests():
                             external_video = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                             # Capture video on external device
                             command = ["ssh", EXTERNAL_DEVICE_NAME, "cd", EXTERNAL_DEVICE_PATH+" && ", 
-                                       "source", "venv/bin/activate && ", "python3", "CapVideo.py"+" && ", 
+                                       "source", "venv/bin/activate && ", "python3", "cap_video.py"+" && ", 
                                        "exit"]
                             subprocess.run(command)
                         else:
