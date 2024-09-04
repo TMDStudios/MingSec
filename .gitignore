@@ -1,10 +1,11 @@
-/Local/venv
-/BackEnd/venv
+/local/venv
+/core/venv
 *.avi
 *.jpg
 *.sqlite3
 *.db
 .env
+todo.txt
 
 # Python bytecode files
 __pycache__/

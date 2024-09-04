@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    MingSec
+{% endblock %}
+
+
+{% block content %}
+    <div>
+        <h1>Camera Request</h1>
+        <form action="/request" method="POST">
+            {% csrf_token %}
+            <label for="type" >Request Type:</label>
+            <select name="type" id="type">
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="status">Status</option>
+            </select>
+            <label for="camera" >Select Camera:</label>
+            <select name="camera" id="camera">
+                <option value="pc">Main</option>
+                <option value="external">External</option>
+            </select>
+            <label for="length" >Video Length (Optional):</label>
+            <input type="number" id="length" name="length" placeholder="Defaults to 10 seconds">
+            <input type="submit" value="Submit">
+        </form> 
+    </div>
+{% endblock %}

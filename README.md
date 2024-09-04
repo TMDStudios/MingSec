@@ -12,9 +12,9 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 
 ## Project Structure:
 
-- **docs/** - Contains a Single Page Application (SPA) for accessing the MingSec API. This is the user interface for interacting with the security system.
-- **BackEnd/** - Includes the Rest API that controls the security system remotely. This is responsible for handling requests from the SPA and managing the system's core functionalities.
-- **Local/** - Contains the MingSec application, including configuration files and local scripts for running the system.
+- **docs/** - Contains a Single Page Application (SPA) for the project demo. (Coming soon)
+- **core/** - Includes the REST API and user interface for remote control and system management.
+- **local/** - Contains the MingSec application, including configuration files and local scripts.
 
 ## License
 
