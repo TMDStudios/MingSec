@@ -31,8 +31,6 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 
 [Study Room](https://github.com/TMDStudios/StudyRoom 'Study Room') - Open-source platform for students to improve their English vocabulary and grammar
 
-[Mock Trader](https://github.com/TMDStudios/MockTrader 'Mock Trader') - Open-source Bitcoin trading game
-
 [Crypto Ledger](https://play.google.com/store/apps/details?id=com.tmdstudios.cryptoledgerkotlin 'Crypto Ledger') - Open-source app for tracking cryptocurrency trades
 
 [Game Room](https://github.com/TMDStudios/GameRoom 'Game Room') - A platform for educators to play games and/or review materials with their students
