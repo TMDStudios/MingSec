@@ -57,6 +57,7 @@ class CameraSystem:
         self.dropbox_video_path = ''
         self.unsent_images = []
         self.unsent_videos = []
+        self.dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN)
 
         self.last_img_upload_time = int(time()*1000)
         self.last_vid_upload_time = int(time()*1000)
@@ -79,41 +80,42 @@ class CameraSystem:
         self.beep_alarm_thread = None
 
     def dropbox_upload_img(self):
-        dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN)
-
-        if dropbox_handler:
-            if len(self.unsent_images) > 0:
-                print("UPLOADING ",len(self.unsent_images)," UNSENT IMAGES")
-                for i in self.unsent_images:
-                    local_file_path = pathlib.Path(self.local_path) / str(i)
-                    dpx_path = '/MingSec/'+str(i)
-                    dropbox_handler.upload_file(str(local_file_path), dpx_path)
-                self.unsent_images.clear()
-
+        if self.dropbox_handler.connected:
             local_file_path = pathlib.Path(self.local_path) / self.img_file_name
-            dropbox_handler.upload_file(str(local_file_path), self.dropbox_img_path)
+            self.dropbox_handler.upload_file(str(local_file_path), self.dropbox_img_path)
         else:
             local_file_path = pathlib.Path(self.local_path) / self.img_file_name
             self.unsent_images.append(local_file_path)
             print('Error uploading image to Dropbox:', local_file_path)
 
     def dropbox_upload_video(self):
-        dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN)
-
-        if dropbox_handler:
-            if len(self.unsent_videos) > 0:
-                print("UPLOADING ",len(self.unsent_videos)," UNSENT VIDEOS")
-                for i in self.unsent_videos:
-                    local_file_path = pathlib.Path(self.local_path) / str(i)
-                    dpx_path = '/MingSec/'+str(i)
-                    dropbox_handler.upload_file(str(local_file_path), dpx_path)
-
+        if self.dropbox_handler.connected:
             local_file_path = pathlib.Path(self.local_path) / self.img_file_name
-            dropbox_handler.upload_file(str(local_file_path), self.dropbox_video_path)
+            self.dropbox_handler.upload_file(str(local_file_path), self.dropbox_video_path)
         else:
             local_file_path = pathlib.Path(self.local_path) / self.last_recording
             self.unsent_videos.append(local_file_path)
             print('Error uploading video to Dropbox:', local_file_path)
+
+    def dropbox_upload_unsent(self, type):
+        if self.dropbox_handler.connected:
+            if type=='image':
+                print("UPLOADING ",len(self.unsent_images)," UNSENT IMAGES")
+                for i in self.unsent_images:
+                    local_file_path = pathlib.Path(self.local_path) / str(i)
+                    dpx_path = '/MingSec/'+str(i)
+                    self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
+                self.unsent_images.clear()
+            else:
+                print("UPLOADING ",len(self.unsent_videos)," UNSENT VIDEOS")
+                for i in self.unsent_videos:
+                    local_file_path = pathlib.Path(self.local_path) / str(i)
+                    dpx_path = '/MingSec/'+str(i)
+                    self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
+                self.unsent_videos.clear()
+        else:
+            print("NO DROPBOX CONNECTION FOUND, ESTABLISHING NEW CONNECTION...")
+            self.dropbox_handler.dbx = self.dropbox_handler.connect()
 
     def beep_alarm(self):
         for i in range(5):
@@ -139,6 +141,13 @@ class CameraSystem:
 
     def check_requests(self):
         # print("THREADS: ", threading.active_count()) # for testing
+        
+        # Upload unsent images and videos
+        if len(self.unsent_images) > 0:
+            self.dropbox_upload_unsent('image')
+        if len(self.unsent_videos) > 0:
+            self.dropbox_upload_unsent('video')
+
         try:
             print("CHECKING FOR REQUESTS")
 

@@ -7,16 +7,26 @@ class DropboxHandler:
         self.app_secret = app_secret
         self.refresh_token = refresh_token
         self.dbx = self.connect()
+        self.connected = False
 
     def connect(self):
         try:
-            return dropbox.Dropbox(
+            dbx = dropbox.Dropbox(
                 app_key=self.app_key,
                 app_secret=self.app_secret,
                 oauth2_refresh_token=self.refresh_token
             )
+            dbx.users_get_current_account() # Confirm connection
+            self.connected = True
+            print("Successfully connected to Dropbox.")
+            return dbx
         except AuthError as e:
             print('Error connecting to Dropbox with access token:', e)
+            self.connected = False
+            return None
+        except Exception as e:
+            print('An unexpected error occurred:', e)
+            self.connected = False
             return None
 
     def upload_file(self, local_path, dropbox_path):
