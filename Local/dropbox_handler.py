@@ -2,10 +2,11 @@ import dropbox
 from dropbox.exceptions import AuthError
 
 class DropboxHandler:
-    def __init__(self, app_key, app_secret, refresh_token):
+    def __init__(self, app_key, app_secret, refresh_token, logger):
         self.app_key = app_key
         self.app_secret = app_secret
         self.refresh_token = refresh_token
+        self.logger = logger
         self.dbx = self.connect()
         self.connected = False
 
@@ -18,14 +19,14 @@ class DropboxHandler:
             )
             dbx.users_get_current_account() # Confirm connection
             self.connected = True
-            print("Successfully connected to Dropbox.")
+            self.logger.info("Successfully connected to Dropbox.")
             return dbx
         except AuthError as e:
-            print('Error connecting to Dropbox with access token:', e)
+            self.logger.error('Error connecting to Dropbox with access token:', e)
             self.connected = False
             return None
         except Exception as e:
-            print('An unexpected error occurred:', e)
+            self.logger.error('An unexpected error occurred:', e)
             self.connected = False
             return None
 
@@ -33,7 +34,7 @@ class DropboxHandler:
         try:
             with open(local_path, "rb") as f:
                 meta = self.dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode("overwrite"))
-                print(f"File uploaded to {dropbox_path}")
+                self.logger.info(f"File uploaded to {dropbox_path}")
                 return meta
         except Exception as e:
-            print('Error uploading file to Dropbox:', e)
+            self.logger.error('Error uploading file to Dropbox:', e)

@@ -16,6 +16,7 @@ import os
 
 import requests
 import json
+import logging
 
 class CameraSystem:
     def __init__(self) -> None:
@@ -51,13 +52,17 @@ class CameraSystem:
         self.upload_recording = False
         self.last_image_time = int(time()*1000)
 
+        # Logging
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
         # Dropbox vars
         self.local_path = '.'
         self.dropbox_img_path = ''
         self.dropbox_video_path = ''
         self.unsent_images = []
         self.unsent_videos = []
-        self.dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN)
+        self.dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN, self.logger)
 
         self.last_img_upload_time = int(time()*1000)
         self.last_vid_upload_time = int(time()*1000)
@@ -86,7 +91,7 @@ class CameraSystem:
         else:
             local_file_path = pathlib.Path(self.local_path) / self.img_file_name
             self.unsent_images.append(local_file_path)
-            print('Error uploading image to Dropbox:', local_file_path)
+            self.logger.error('Error uploading image to Dropbox:', local_file_path)
 
     def dropbox_upload_video(self):
         if self.dropbox_handler.connected:
@@ -95,53 +100,58 @@ class CameraSystem:
         else:
             local_file_path = pathlib.Path(self.local_path) / self.last_recording
             self.unsent_videos.append(local_file_path)
-            print('Error uploading video to Dropbox:', local_file_path)
+            self.logger.error('Error uploading video to Dropbox:', local_file_path)
 
     def dropbox_upload_unsent(self, type):
         if self.dropbox_handler.connected:
             if type=='image':
-                print("UPLOADING ",len(self.unsent_images)," UNSENT IMAGES")
+                # self.logger.info("UPLOADING ",len(self.unsent_images)," UNSENT IMAGES")
+                self.logger.info(f"UPLOADING {len(self.unsent_images)} UNSENT IMAGES")
                 for i in self.unsent_images:
                     local_file_path = pathlib.Path(self.local_path) / str(i)
                     dpx_path = '/MingSec/'+str(i)
                     self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
                 self.unsent_images.clear()
             else:
-                print("UPLOADING ",len(self.unsent_videos)," UNSENT VIDEOS")
+                # self.logger.info("UPLOADING ",len(self.unsent_videos)," UNSENT VIDEOS")
+                self.logger.info(f"UPLOADING {len(self.unsent_videos)} UNSENT VIDEOS")
                 for i in self.unsent_videos:
                     local_file_path = pathlib.Path(self.local_path) / str(i)
                     dpx_path = '/MingSec/'+str(i)
                     self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
                 self.unsent_videos.clear()
         else:
-            print("NO DROPBOX CONNECTION FOUND, ESTABLISHING NEW CONNECTION...")
+            self.logger.warning("NO DROPBOX CONNECTION FOUND, ESTABLISHING NEW CONNECTION...")
             self.dropbox_handler.dbx = self.dropbox_handler.connect()
 
     def beep_alarm(self):
         for i in range(5):
             if not self.alarm_mode:
                 break
-            print("ALARM...",i)
+            self.logger.warning("ALARM...",i)
             # winsound.Beep(2500, 1000) # uncomment for sound
         self.alarm = False
 
     def report_alarm(self):
         try:
             r = requests.post(self.ALARM_REPORT_ENDPOINT, json={'camera':'PC'})
-            print("ALARM REPORT SENT", r.text)
+            # self.logger.info("ALARM REPORT SENT", r.text)
+            self.logger.info(f"ALARM REPORT SENT {r.text}")
         except Exception as e:
-            print("UNABLE TO SEND ALARM REPORT... ", e)
+            self.logger.error("UNABLE TO SEND ALARM REPORT... ", e)
 
     def report_status(self, camera, temperature):
         try:
             r = requests.post(self.STATUS_REPORT_ENDPOINT, json={'camera':camera, 'status':temperature})
-            print("STATUS REPORT SENT", r.text)
+            # self.logger.info("STATUS REPORT SENT", r.text)
+            self.logger.info(f"STATUS REPORT SENT {r.text}")
         except Exception as e:
-            print("UNABLE TO SEND STATUS REPORT... ", e)
+            self.logger.error("UNABLE TO SEND STATUS REPORT... ", e)
 
     def check_requests(self):
-        # print("THREADS: ", threading.active_count()) # for testing
-        
+        # self.logger.debug("THREADS: ", threading.active_count()) # for testing
+        self.logger.debug(f"THREADS: {threading.active_count()}")
+
         # Upload unsent images and videos
         if len(self.unsent_images) > 0:
             self.dropbox_upload_unsent('image')
@@ -149,7 +159,7 @@ class CameraSystem:
             self.dropbox_upload_unsent('video')
 
         try:
-            print("CHECKING FOR REQUESTS")
+            self.logger.info("CHECKING FOR REQUESTS")
 
             if len(self.external_image) > 0:
                 if self.external_request_delay < 3:
@@ -157,13 +167,13 @@ class CameraSystem:
                 elif self.external_request_delay == 3:
                     self.external_request_delay += 1
                     # Rename image
-                    print("RENAMING IMAGE")
+                    self.logger.info("RENAMING IMAGE")
                     command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", "mv", "ImageSSH.jpg "+self.external_image+" && ", "exit"]
                     subprocess.run(command)
                 else:
                     self.external_request_delay = 0
                     # Transfer to local device
-                    print("FETCHING EXT IMAGE")
+                    self.logger.info("FETCHING EXT IMAGE")
                     command = ["scp", self.EXTERNAL_DEVICE_NAME+":"+self.EXTERNAL_DEVICE_PATH+"/"+self.external_image, "."]
                     subprocess.run(command)
                     self.unsent_images.append(self.external_image)
@@ -175,13 +185,13 @@ class CameraSystem:
                 elif self.external_request_delay == 6:
                     self.external_request_delay += 1
                     # Rename video
-                    print("RENAMING VIDEO")
+                    self.logger.info("RENAMING VIDEO")
                     command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", "mv", "VideoSSH.avi "+self.external_video+" && ", "exit"]
                     subprocess.run(command)
                 else:
                     self.external_request_delay = 0
                     # Transfer to local device
-                    print("FETCHING EXT VIDEO")
+                    self.logger.info("FETCHING EXT VIDEO")
                     command = ["scp", self.EXTERNAL_DEVICE_NAME+":"+self.EXTERNAL_DEVICE_PATH+"/"+self.external_video, "."]
                     subprocess.run(command)
                     self.unsent_videos.append(self.external_video)
@@ -191,7 +201,7 @@ class CameraSystem:
             request_dict = json.loads(req.content)
             if len(request_dict)>0:
                 request_data = request_dict[-1]
-                print(request_data)
+                self.logger.info(f"LAST REQUEST: {request_data}")
 
                 if request_data['camera'].lower()=='pc' or request_data['camera'].lower()=='external':
                     if request_data['type'].lower()=='image':
@@ -199,7 +209,7 @@ class CameraSystem:
                         if request_data['time']>self.last_img_upload_time:
                             self.last_img_upload_time = int(time()*1000)
                             if request_data['camera'].lower()=='external':
-                                print("EXT IMAGE REQUESTED")
+                                self.logger.info("EXT IMAGE REQUESTED")
                                 self.external_image = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                                 # Capture image on external device
                                 command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", 
@@ -207,7 +217,7 @@ class CameraSystem:
                                         "exit"]
                                 subprocess.run(command)
                             else:
-                                print("IMAGE REQUESTED")
+                                self.logger.info("IMAGE REQUESTED")
                                 self.img_file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                                 _, frame = self.cap.read()
                                 cv2.imwrite(self.img_file_name, frame)
@@ -222,7 +232,7 @@ class CameraSystem:
                         if request_data['time']>self.last_vid_upload_time:
                             self.last_vid_upload_time = int(time()*1000)
                             if request_data['camera'].lower()=='external':
-                                print("EXT VIDEO REQUESTED")
+                                self.logger.info("EXT VIDEO REQUESTED")
                                 self.external_video = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                                 # Capture video on external device
                                 command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", 
@@ -231,7 +241,7 @@ class CameraSystem:
                                 subprocess.run(command)
                             else:
                                 self.last_vid_upload_time = int(time()*1000)
-                                print("VIDEO REQUESTED")
+                                self.logger.info("VIDEO REQUESTED")
                                 self.file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                                 self.last_recording = self.file_name
                                 self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
@@ -243,7 +253,7 @@ class CameraSystem:
                         if request_data['time']>self.last_status_report:
                             self.last_status_report = int(time()*1000)
                             if request_data['camera'].lower()=='external':
-                                print("EXT STATUS REQUESTED")
+                                self.logger.info("EXT STATUS REQUESTED")
                                 command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", 
                                         "cat", "/sys/class/thermal/thermal_zone*/temp && ", 
                                         "exit"]
@@ -256,15 +266,15 @@ class CameraSystem:
                                 # Clean and join the temperature values
                                 ext_report = "EXT TEMP: " + ", ".join(temp.strip() for temp in temperatures if temp.strip())
 
-                                print("****EXT STATUS****",ext_report)
-                                print("****EXT STATUS LEN****",len(ext_report))
+                                self.logger.debug("****EXT STATUS****",ext_report)
+                                self.logger.debug("****EXT STATUS LEN****",len(ext_report))
                                 self.report_status("EXT", ext_report)
                             else:
-                                print("STATUS REQUESTED")
+                                self.logger.info("STATUS REQUESTED")
                                 self.report_status("PC", "OK")
 
         except Exception as e:
-            print('Unable to connect to API: ' + str(e))
+            self.logger.error('Unable to connect to API: ' + str(e))
 
     def run(self):
         while True:
@@ -303,7 +313,7 @@ class CameraSystem:
             if int(time()*1000) - self.last_image_time > 600000:
                 # Turn on alarm mode
                 self.alarm_mode = True
-                print("SAVE IMG")
+                self.logger.info("SAVE IMG")
                 self.last_image_time = int(time()*1000)
                 self.img_file_name = strftime("PC_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                 cv2.imwrite(self.img_file_name, frame)
@@ -316,7 +326,7 @@ class CameraSystem:
             if self.recording:
                 self.video.write(frame)
                 if int(time() * 1000) - self.recording_start > self.video_length:
-                    print("stop recording")
+                    self.logger.info("STOP RECORDING")
                     self.video_length = 10000
                     self.recording_start = 0
                     self.recording = False
