@@ -22,11 +22,11 @@ class DropboxHandler:
             self.logger.info("Successfully connected to Dropbox.")
             return dbx
         except AuthError as e:
-            self.logger.error('Error connecting to Dropbox with access token:', e)
+            self.logger.error(f'Error connecting to Dropbox with access token: {e}')
             self.connected = False
             return None
         except Exception as e:
-            self.logger.error('An unexpected error occurred:', e)
+            self.logger.error(f'An unexpected error occurred: {e}')
             self.connected = False
             return None
 
@@ -37,4 +37,4 @@ class DropboxHandler:
                 self.logger.info(f"File uploaded to {dropbox_path}")
                 return meta
         except Exception as e:
-            self.logger.error('Error uploading file to Dropbox:', e)
+            self.logger.error(f'Error uploading file to Dropbox: {e}')
