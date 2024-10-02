@@ -258,12 +258,16 @@ class CameraSystem:
                     if request_data['type'].lower()=='video':
 
                         if request_data['time']>self.last_vid_upload_time:
+                            try:
+                                self.video_length = int(request_data['time'])*1000
+                            except:
+                                self.logger.warning("Invalid video length. Using defauld of 10 seconds.")
                             self.last_vid_upload_time = int(time()*1000)
                             if request_data['camera'].lower()=='external':
                                 self.logger.info("EXT VIDEO REQUESTED")
                                 self.external_video = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                                 # Capture video on external device
-                                command = ["ssh", self.EXTERNAL_DEVICE_NAME, f"cd {self.EXTERNAL_DEVICE_PATH} && source venv/bin/activate && python3 cap_video.py"]
+                                command = ["ssh", self.EXTERNAL_DEVICE_NAME, f"cd {self.EXTERNAL_DEVICE_PATH} && source venv/bin/activate && python3 cap_video.py --duration {self.video_length}"]
                                 ssh_result = self.run_external_command(command)
                                 if ssh_result == "OK":
                                     self.logger.info("External Video Captured Successfully")
