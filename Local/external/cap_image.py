@@ -1,34 +1,33 @@
+# This file should be copied to the external device, be sure to turn on your webcam on the external device
+
 import cv2
 from time import strftime, localtime
 
-# This file should be copied to the external device, be sure to turn on your webcam on the external device
+IMG_FILE_NAME = 'ImageSSH.jpg'
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
 
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+def capture_image():
+    cap = cv2.VideoCapture(0)
+    try:
+        if not cap.isOpened():
+            raise RuntimeError("Could not open the camera.")
 
-# Check if the camera opened successfully
-if not cap.isOpened():
-    print("Error: Could not open the camera.")
-    exit()
+        ret, frame = cap.read()
+        if not ret:
+            raise RuntimeError("Frame not captured. Could not read frame from the camera.")
 
-img_file_name = 'ImageSSH.jpg'
+        if frame is not None and frame.size != 0:
+            cv2.putText(frame, strftime("%H:%M:%S", localtime()), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+            cv2.imwrite(IMG_FILE_NAME, frame)
+            return f"Image saved as {IMG_FILE_NAME}"
+        else:
+            raise ValueError("Captured frame is empty, cannot save image.")
+    finally:
+        cap.release()
 
-ret, frame = cap.read()
-if not ret:
-    print("Error: Could not read frame from the camera.")
-    cap.release()
-    exit()
-
-font = cv2.FONT_HERSHEY_SIMPLEX
-cv2.putText(frame, strftime("%H:%M:%S", localtime()), (10,30), font, 1, (0,0,255), 2, cv2.LINE_AA)
-
-# Check if the frame is empty before writing to a file
-if frame is not None and frame.size != 0:
-    cv2.imwrite(img_file_name, frame)
-    print(f"Image saved as {img_file_name}")
-else:
-    print("Error: Captured frame is empty, cannot save image.")
-
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    try:
+        capture_image()
+    except Exception as e:
+        raise RuntimeError(f"Error: {e}")

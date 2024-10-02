@@ -238,9 +238,7 @@ class CameraSystem:
                                 self.logger.info("EXT IMAGE REQUESTED")
                                 self.external_image = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                                 # Capture image on external device
-                                command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", 
-                                        "source", "venv/bin/activate && ", "python3", "cap_image.py"+" && ", 
-                                        "exit"]
+                                command = ["ssh", self.EXTERNAL_DEVICE_NAME, f"cd {self.EXTERNAL_DEVICE_PATH} && source venv/bin/activate && python3 cap_image.py"]
                                 ssh_result = self.run_external_command(command)
                                 if ssh_result == "OK":
                                     self.logger.info("External Image Captured Successfully")
@@ -265,9 +263,7 @@ class CameraSystem:
                                 self.logger.info("EXT VIDEO REQUESTED")
                                 self.external_video = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                                 # Capture video on external device
-                                command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", 
-                                        "source", "venv/bin/activate && ", "python3", "cap_video.py"+" && ", 
-                                        "exit"]
+                                command = ["ssh", self.EXTERNAL_DEVICE_NAME, f"cd {self.EXTERNAL_DEVICE_PATH} && source venv/bin/activate && python3 cap_video.py"]
                                 ssh_result = self.run_external_command(command)
                                 if ssh_result == "OK":
                                     self.logger.info("External Video Captured Successfully")
@@ -426,4 +422,11 @@ class CameraSystem:
 
 if __name__ == "__main__":
     camera_system = CameraSystem()
-    camera_system.run()
+    try:
+        camera_system.run()
+    except KeyboardInterrupt:
+        camera_system.logger.warning("Program exited with Ctrl+C")
+    except Exception as e:
+        camera_system.logger.error(f"An error occurred: {e}")
+    finally:
+        print("Exiting program...")
