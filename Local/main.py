@@ -92,10 +92,10 @@ class CameraSystem:
                 self.external_video = ''
                 return "EXTERNAL CAMERA ERROR"
             return "OK"
-        except subprocess.CalledProcessError as e:
+        except (subprocess.CalledProcessError, RuntimeError) as e:
             self.external_image = ''
             self.external_video = ''
-            return f"COMMAND ERROR: {e.stderr.strip()}"
+            return "EXTERNAL CAMERA ERROR"
 
     def dropbox_upload_img(self):
         if self.dropbox_handler.connected:
@@ -224,9 +224,16 @@ class CameraSystem:
                     self.external_video = ''
 
             req = requests.get(self.CAM_REQUEST_ENDPOINT)
-            request_dict = json.loads(req.content)
-            if len(request_dict)>0:
-                request_data = request_dict[-1]
+            json_array = []
+            if req.status_code == 200:
+                try:
+                    json_array = json.loads(req.content)
+                except json.JSONDecodeError:
+                    self.logger.error("Invalid JSON received from the API.")
+            else:
+                self.logger.error(f"UNABLE TO REACH API. CODE: {req.status_code}")
+            if len(json_array)>0:
+                request_data = json_array[-1]
                 self.logger.info(f"LAST REQUEST: {request_data}")
 
                 if request_data['camera'].lower()=='pc' or request_data['camera'].lower()=='external':
@@ -258,8 +265,12 @@ class CameraSystem:
                     if request_data['type'].lower()=='video':
 
                         if request_data['time']>self.last_vid_upload_time:
+                            print(f"INFO: {request_data['length']}, type: {type(request_data['length'])}")
                             try:
-                                self.video_length = int(request_data['time'])*1000
+                                self.video_length = int(request_data['length'])*1000
+                                # Limit requested video length to 1 minute
+                                if self.video_length > 60000:
+                                    self.video_length = 60000
                             except:
                                 self.logger.warning("Invalid video length. Using defauld of 10 seconds.")
                             self.last_vid_upload_time = int(time()*1000)
@@ -361,7 +372,6 @@ class CameraSystem:
                 self.video.write(frame)
                 if int(time() * 1000) - self.recording_start > self.video_length:
                     self.logger.info("STOP RECORDING")
-                    self.video_length = 10000
                     self.recording_start = 0
                     self.recording = False
                     if len(self.last_recording) > 0:
@@ -394,6 +404,7 @@ class CameraSystem:
                         self.last_recording = self.file_name
                         self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
                         self.recording = True
+                        self.video_length = 10000
                     self.recording_start = int(time() * 1000)
                     if self.beep_alarm_thread is None or not self.beep_alarm_thread.is_alive():
                         self.beep_alarm_thread = threading.Thread(target=self.beep_alarm, daemon=True)
