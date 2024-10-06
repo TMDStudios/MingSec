@@ -19,6 +19,50 @@ import json
 import logging
 
 class CameraSystem:
+    # Video settings
+    FRAME_WIDTH = 640
+    FRAME_HEIGHT = 480
+    FRAME_RATE = 25.0
+    FONT_THICKNESS = 2
+    FONT_SCALE = 1
+    
+    # Video lengths
+    DEFAULT_VIDEO_LENGTH = 10000 # milliseconds
+    MAX_VIDEO_LENGTH = 60000 # milliseconds
+
+    # Intervals
+    REQUEST_CHECK_INTERVAL = 10000 # milliseconds
+    IMAGE_SAVE_INTERVAL = 600000 # milliseconds
+
+    # Alarm settings
+    ALARM_BEEP_COUNT = 5
+    ALARM_COUNTER_THRESHOLD = 20
+
+    # Camera settings
+    GAUSSIAN_BLUR_KERNEL_SIZE_START = (21, 21)
+    GAUSSIAN_BLUR_KERNEL_SIZE_DIFF = (5, 5)
+    GAUSSIAN_BLUR_KERNEL_SIZE = 0
+    CAMERA_INDEX = 0
+
+    # Time conversion
+    TIME_CONVERSION_MULTIPLIER = 1000 # to convert seconds to milliseconds
+
+    # Threshold values
+    THRESHOLD_VALUE = 25
+    THRESHOLD_MAX = 255
+    THRESHOLD_SUM = 300
+
+    # Beep settings
+    BEEP_FREQUENCY = 2500 # Frequency in Hz
+    BEEP_DURATION = 1000 # Duration in ms
+
+    # External request delays
+    IMAGE_REQUEST_DELAY = 3
+    VIDEO_REQUEST_DELAY = 6
+
+    # Key delay
+    WAIT_KEY_DELAY = 30
+
     def __init__(self) -> None:
         load_dotenv()
         self.DROPBOX_APP_KEY = os.environ['DROPBOX_APP_KEY']
@@ -30,27 +74,27 @@ class CameraSystem:
         self.EXTERNAL_DEVICE_NAME = os.environ['EXTERNAL_DEVICE_NAME']
         self.EXTERNAL_DEVICE_PATH = os.environ['EXTERNAL_DEVICE_PATH']
 
-        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap = cv2.VideoCapture(self.CAMERA_INDEX, cv2.CAP_DSHOW)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.FRAME_WIDTH)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
 
         self._, self.start_frame = self.cap.read()
         self.start_frame = cv2.cvtColor(self.start_frame, cv2.COLOR_BGR2GRAY)
-        self.start_frame = cv2.GaussianBlur(self.start_frame, (21, 21), 0)
+        self.start_frame = cv2.GaussianBlur(self.start_frame, self.GAUSSIAN_BLUR_KERNEL_SIZE_START, self.GAUSSIAN_BLUR_KERNEL_SIZE)
 
         self.alarm = False
         self.alarm_mode = False
         self.alarm_counter = 0
 
         self.recording = False
-        self.video_length = 10000
+        self.video_length = self.DEFAULT_VIDEO_LENGTH
         self.recording_start = 0
         self.file_name = 'recording.avi'
-        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
+        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
         self.last_recording = ''
         self.img_file_name = ''
         self.upload_recording = False
-        self.last_image_time = int(time()*1000)
+        self.last_image_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
 
         # Logging
         self.logger = logging.getLogger(__name__)
@@ -64,12 +108,12 @@ class CameraSystem:
         self.unsent_videos = []
         self.dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN, self.logger)
 
-        self.last_img_upload_time = int(time()*1000)
-        self.last_vid_upload_time = int(time()*1000)
-        self.last_status_report = int(time()*1000)
+        self.last_img_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
+        self.last_vid_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
+        self.last_status_report = int(time()*self.TIME_CONVERSION_MULTIPLIER)
 
         # Check for recording requests
-        self.last_request = int(time()*1000)
+        self.last_request = int(time()*self.TIME_CONVERSION_MULTIPLIER)
 
         # External Device
         self.external_image = ''
@@ -136,11 +180,11 @@ class CameraSystem:
             self.dropbox_handler.dbx = self.dropbox_handler.connect()
 
     def beep_alarm(self):
-        for i in range(5):
+        for i in range(self.ALARM_BEEP_COUNT):
             if not self.alarm_mode:
                 break
             self.logger.warning(f"ALARM...{i}")
-            # winsound.Beep(2500, 1000) # uncomment for sound
+            # winsound.Beep(self.BEEP_FREQUENCY, self.BEEP_DURATION) # uncomment for sound
         self.alarm = False
 
     def report_alarm(self):
@@ -171,9 +215,9 @@ class CameraSystem:
             self.logger.info("CHECKING FOR REQUESTS")
 
             if len(self.external_image) > 0:
-                if self.external_request_delay < 3:
+                if self.external_request_delay < self.IMAGE_REQUEST_DELAY:
                     self.external_request_delay += 1
-                elif self.external_request_delay == 3:
+                elif self.external_request_delay == self.IMAGE_REQUEST_DELAY:
                     self.external_request_delay += 1
                     # Rename image
                     self.logger.info("RENAMING IMAGE")
@@ -197,9 +241,9 @@ class CameraSystem:
                         self.logger.error(ssh_result)
 
             if len(self.external_video) > 0:
-                if self.external_request_delay < 6:
+                if self.external_request_delay < self.VIDEO_REQUEST_DELAY:
                     self.external_request_delay += 1
-                elif self.external_request_delay == 6:
+                elif self.external_request_delay == self.VIDEO_REQUEST_DELAY:
                     self.external_request_delay += 1
                     # Rename video
                     self.logger.info("RENAMING VIDEO")
@@ -240,7 +284,7 @@ class CameraSystem:
                     if request_data['type'].lower()=='image':
 
                         if request_data['time']>self.last_img_upload_time:
-                            self.last_img_upload_time = int(time()*1000)
+                            self.last_img_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
                             if request_data['camera'].lower()=='external':
                                 self.logger.info("EXT IMAGE REQUESTED")
                                 self.external_image = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
@@ -267,13 +311,13 @@ class CameraSystem:
                         if request_data['time']>self.last_vid_upload_time:
                             print(f"INFO: {request_data['length']}, type: {type(request_data['length'])}")
                             try:
-                                self.video_length = int(request_data['length'])*1000
+                                self.video_length = int(request_data['length'])*self.TIME_CONVERSION_MULTIPLIER
                                 # Limit requested video length to 1 minute
-                                if self.video_length > 60000:
-                                    self.video_length = 60000
+                                if self.video_length > self.MAX_VIDEO_LENGTH:
+                                    self.video_length = self.MAX_VIDEO_LENGTH
                             except:
                                 self.logger.warning("Invalid video length. Using defauld of 10 seconds.")
-                            self.last_vid_upload_time = int(time()*1000)
+                            self.last_vid_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
                             if request_data['camera'].lower()=='external':
                                 self.logger.info("EXT VIDEO REQUESTED")
                                 self.external_video = strftime("EXTERNAL_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
@@ -285,18 +329,18 @@ class CameraSystem:
                                 else:
                                     self.logger.error(ssh_result)
                             else:
-                                self.last_vid_upload_time = int(time()*1000)
+                                self.last_vid_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
                                 self.logger.info("VIDEO REQUESTED")
                                 self.file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                                 self.last_recording = self.file_name
-                                self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
-                                self.recording_start = int(time() * 1000)
+                                self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
+                                self.recording_start = int(time() * self.TIME_CONVERSION_MULTIPLIER)
                                 self.recording = True
 
                     if request_data['type'].lower()=='status':
 
                         if request_data['time']>self.last_status_report:
-                            self.last_status_report = int(time()*1000)
+                            self.last_status_report = int(time()*self.TIME_CONVERSION_MULTIPLIER)
                             if request_data['camera'].lower()=='external':
                                 self.logger.info("EXT STATUS REQUESTED")
                                 command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", 
@@ -326,17 +370,17 @@ class CameraSystem:
             _, frame = self.cap.read()
 
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(frame,strftime("%H:%M:%S", localtime()),(10,30), font, 1,(0,0,255),2,cv2.LINE_AA)
+            cv2.putText(frame,strftime("%H:%M:%S", localtime()),(10,30), font, self.FONT_SCALE, (0,0,255), self.FONT_THICKNESS, cv2.LINE_AA)
 
             if self.alarm_mode:
                 frame_bw = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-                frame_bw = cv2.GaussianBlur(frame_bw, (5, 5), 0)
+                frame_bw = cv2.GaussianBlur(frame_bw, self.GAUSSIAN_BLUR_KERNEL_SIZE_DIFF, self.GAUSSIAN_BLUR_KERNEL_SIZE)
 
                 difference = cv2.absdiff(frame_bw, self.start_frame)
-                threshold = cv2.threshold(difference, 25, 255, cv2.THRESH_BINARY)[1]
+                threshold = cv2.threshold(difference, self.THRESHOLD_VALUE, self.THRESHOLD_MAX, cv2.THRESH_BINARY)[1]
                 self.start_frame = frame_bw
 
-                if threshold.sum() > 300: # smaller is more sensitive
+                if threshold.sum() > self.THRESHOLD_SUM: # smaller is more sensitive
                     self.alarm_counter += 1
                 else:
                     if self.alarm_counter > 0:
@@ -348,18 +392,18 @@ class CameraSystem:
                 cv2.imshow("Cam", frame)
 
             # Check for requests
-            if int(time()*1000) - self.last_request > 10000:
-                self.last_request = int(time()*1000)
+            if int(time()*self.TIME_CONVERSION_MULTIPLIER) - self.last_request > self.REQUEST_CHECK_INTERVAL:
+                self.last_request = int(time()*self.TIME_CONVERSION_MULTIPLIER)
                 if self.check_request_thread is None or not self.check_request_thread.is_alive():
                     self.check_request_thread = threading.Thread(target=self.check_requests, daemon=True)
                     self.check_request_thread.start()
 
             # Save and upload image every 10 minutes
-            if int(time()*1000) - self.last_image_time > 600000:
+            if int(time()*self.TIME_CONVERSION_MULTIPLIER) - self.last_image_time > self.IMAGE_SAVE_INTERVAL:
                 # Turn on alarm mode
                 self.alarm_mode = True
                 self.logger.info("SAVE IMG")
-                self.last_image_time = int(time()*1000)
+                self.last_image_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
                 self.img_file_name = strftime("PC_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
                 cv2.imwrite(self.img_file_name, frame)
                 if len(self.img_file_name) > 0:
@@ -370,21 +414,21 @@ class CameraSystem:
             
             if self.recording:
                 self.video.write(frame)
-                if int(time() * 1000) - self.recording_start > self.video_length:
+                if int(time() * self.TIME_CONVERSION_MULTIPLIER) - self.recording_start > self.video_length:
                     self.logger.info("STOP RECORDING")
                     self.recording_start = 0
                     self.recording = False
                     if len(self.last_recording) > 0:
                         # Release last recording
                         self.file_name = 'recording.avi'
-                        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
+                        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
 
                         self.dropbox_video_path = '/MingSec/'+self.last_recording
                         if self.upload_vid_thread is None or not self.upload_vid_thread.is_alive():
                             self.upload_vid_thread = threading.Thread(target=self.dropbox_upload_video, daemon=True)
                             self.upload_vid_thread.start()
 
-            if self.alarm_counter > 20:
+            if self.alarm_counter > self.ALARM_COUNTER_THRESHOLD:
                 if not self.alarm:
                     self.alarm = True
                     if self.recording_start == 0:
@@ -402,15 +446,15 @@ class CameraSystem:
 
                         self.file_name = strftime("PC_ALARM_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
                         self.last_recording = self.file_name
-                        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), 25.0, (640, 480))
+                        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
                         self.recording = True
-                        self.video_length = 10000
-                    self.recording_start = int(time() * 1000)
+                        self.video_length = self.DEFAULT_VIDEO_LENGTH
+                    self.recording_start = int(time() * self.TIME_CONVERSION_MULTIPLIER)
                     if self.beep_alarm_thread is None or not self.beep_alarm_thread.is_alive():
                         self.beep_alarm_thread = threading.Thread(target=self.beep_alarm, daemon=True)
                         self.beep_alarm_thread.start()
 
-            key_pressed = cv2.waitKey(30)
+            key_pressed = cv2.waitKey(self.WAIT_KEY_DELAY)
             if key_pressed == ord("t"):
                 self.alarm_mode = not self.alarm_mode
                 self.alarm_counter = 0
