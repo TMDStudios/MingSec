@@ -14,6 +14,9 @@ ERROR_CAMERA_OPEN = "Could not open camera."
 ERROR_FRAME_READ = "Could not read frame from camera."
 ERROR_RECORDING = "Error during recording."
 
+TIME_CONVERSION_MULTIPLIER = 1000 # to convert seconds to milliseconds
+DEFAULT_VIDEO_LENGTH = 10000 # 10 seconds
+
 def initialize_video_writer():
     fourcc = VideoWriter_fourcc(*'XVID')
     return VideoWriter(FILE_NAME, fourcc, FRAME_RATE, (FRAME_WIDTH, FRAME_HEIGHT))
@@ -26,11 +29,11 @@ def capture_video(recording_duration):
         video.release()
         raise RuntimeError(ERROR_CAMERA_OPEN)
 
-    recording_start = int(time() * 1000)
+    recording_start = int(time() * TIME_CONVERSION_MULTIPLIER)
     print("Recording started.")
 
     try:
-        while int(time() * 1000) - recording_start < recording_duration:
+        while int(time() * TIME_CONVERSION_MULTIPLIER) - recording_start < recording_duration:
             ret, frame = cam.read()
             if not ret:
                 raise RuntimeError(ERROR_FRAME_READ)
@@ -45,7 +48,7 @@ def capture_video(recording_duration):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Capture video via SSH.')
-    parser.add_argument('--duration', type=int, default=10000, 
+    parser.add_argument('--duration', type=int, default=DEFAULT_VIDEO_LENGTH, 
                         help='Recording duration in milliseconds (default: 10000)')
 
     args = parser.parse_args()

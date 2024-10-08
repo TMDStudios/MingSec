@@ -1,0 +1,46 @@
+{
+    "video_settings": {
+      "frame_width": 640,
+      "frame_height": 480,
+      "frame_rate": 25.0,
+      "font_scale": 1,
+      "font_thickness": 2
+    },
+    "video_lengths": {
+      "default_video_length": 10000,
+      "max_video_length": 60000
+    },
+    "intervals": {
+      "request_check_interval": 10000,
+      "image_save_interval": 600000
+    },
+    "alarm_settings": {
+      "alarm_beep_count": 5,
+      "alarm_counter_threshold": 20
+    },
+    "camera_settings": {
+      "gaussian_blur_kernel_size_start": [21, 21],
+      "gaussian_blur_kernel_size_diff": [5, 5],
+      "gaussian_blur_kernel_size": 0,
+      "camera_index": 0
+    },
+    "time_conversion": {
+      "time_conversion_multiplier": 1000
+    },
+    "threshold_values": {
+      "threshold_value": 25,
+      "threshold_max": 255,
+      "threshold_sum": 300
+    },
+    "beep_settings": {
+      "beep_frequency": 2500,
+      "beep_duration": 1000
+    },
+    "external_request_delays": {
+      "image_request_delay": 3,
+      "video_request_delay": 6
+    },
+    "key_delay": {
+      "wait_key_delay": 30
+    }
+}

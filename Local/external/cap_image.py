@@ -7,6 +7,9 @@ IMG_FILE_NAME = 'ImageSSH.jpg'
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
+FONT_SCALE = 1
+FONT_THICKNESS = 2
+
 def capture_image():
     cap = cv2.VideoCapture(0)
     try:
@@ -18,7 +21,7 @@ def capture_image():
             raise RuntimeError("Frame not captured. Could not read frame from the camera.")
 
         if frame is not None and frame.size != 0:
-            cv2.putText(frame, strftime("%H:%M:%S", localtime()), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+            cv2.putText(frame, strftime("%H:%M:%S", localtime()), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, (0, 0, 255), FONT_THICKNESS, cv2.LINE_AA)
             cv2.imwrite(IMG_FILE_NAME, frame)
             return f"Image saved as {IMG_FILE_NAME}"
         else:

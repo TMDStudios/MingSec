@@ -19,49 +19,53 @@ import json
 import logging
 
 class CameraSystem:
+    # Load configuration from JSON file
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+
     # Video settings
-    FRAME_WIDTH = 640
-    FRAME_HEIGHT = 480
-    FRAME_RATE = 25.0
-    FONT_THICKNESS = 2
-    FONT_SCALE = 1
+    FRAME_WIDTH = config['video_settings']['frame_width']
+    FRAME_HEIGHT = config['video_settings']['frame_height']
+    FRAME_RATE = config['video_settings']['frame_rate']
+    FONT_SCALE = config['video_settings']['font_scale']
+    FONT_THICKNESS = config['video_settings']['font_thickness']
     
     # Video lengths
-    DEFAULT_VIDEO_LENGTH = 10000 # milliseconds
-    MAX_VIDEO_LENGTH = 60000 # milliseconds
+    DEFAULT_VIDEO_LENGTH = config['video_lengths']['default_video_length']
+    MAX_VIDEO_LENGTH = config['video_lengths']['max_video_length']
 
     # Intervals
-    REQUEST_CHECK_INTERVAL = 10000 # milliseconds
-    IMAGE_SAVE_INTERVAL = 600000 # milliseconds
+    REQUEST_CHECK_INTERVAL = config['intervals']['request_check_interval']
+    IMAGE_SAVE_INTERVAL = config['intervals']['image_save_interval']
 
     # Alarm settings
-    ALARM_BEEP_COUNT = 5
-    ALARM_COUNTER_THRESHOLD = 20
+    ALARM_BEEP_COUNT = config['alarm_settings']['alarm_beep_count']
+    ALARM_COUNTER_THRESHOLD = config['alarm_settings']['alarm_counter_threshold']
 
     # Camera settings
-    GAUSSIAN_BLUR_KERNEL_SIZE_START = (21, 21)
-    GAUSSIAN_BLUR_KERNEL_SIZE_DIFF = (5, 5)
-    GAUSSIAN_BLUR_KERNEL_SIZE = 0
-    CAMERA_INDEX = 0
+    GAUSSIAN_BLUR_KERNEL_SIZE_START = tuple(config['camera_settings']['gaussian_blur_kernel_size_start'])
+    GAUSSIAN_BLUR_KERNEL_SIZE_DIFF = tuple(config['camera_settings']['gaussian_blur_kernel_size_diff'])
+    GAUSSIAN_BLUR_KERNEL_SIZE = config['camera_settings']['gaussian_blur_kernel_size']
+    CAMERA_INDEX = config['camera_settings']['camera_index']
 
     # Time conversion
-    TIME_CONVERSION_MULTIPLIER = 1000 # to convert seconds to milliseconds
+    TIME_CONVERSION_MULTIPLIER = config['time_conversion']['time_conversion_multiplier']
 
     # Threshold values
-    THRESHOLD_VALUE = 25
-    THRESHOLD_MAX = 255
-    THRESHOLD_SUM = 300
+    THRESHOLD_VALUE = config['threshold_values']['threshold_value']
+    THRESHOLD_MAX = config['threshold_values']['threshold_max']
+    THRESHOLD_SUM = config['threshold_values']['threshold_sum']
 
     # Beep settings
-    BEEP_FREQUENCY = 2500 # Frequency in Hz
-    BEEP_DURATION = 1000 # Duration in ms
+    BEEP_FREQUENCY = config['beep_settings']['beep_frequency']
+    BEEP_DURATION = config['beep_settings']['beep_duration']
 
     # External request delays
-    IMAGE_REQUEST_DELAY = 3
-    VIDEO_REQUEST_DELAY = 6
+    IMAGE_REQUEST_DELAY = config['external_request_delays']['image_request_delay']
+    VIDEO_REQUEST_DELAY = config['external_request_delays']['video_request_delay']
 
     # Key delay
-    WAIT_KEY_DELAY = 30
+    WAIT_KEY_DELAY = config['key_delay']['wait_key_delay']
 
     def __init__(self) -> None:
         load_dotenv()
@@ -275,7 +279,7 @@ class CameraSystem:
                 except json.JSONDecodeError:
                     self.logger.error("Invalid JSON received from the API.")
             else:
-                self.logger.error(f"UNABLE TO REACH API. CODE: {req.status_code}")
+                self.logger.error(f"UNABLE TO REACH MingSec API. CODE: {req.status_code}")
             if len(json_array)>0:
                 request_data = json_array[-1]
                 self.logger.info(f"LAST REQUEST: {request_data}")
@@ -309,7 +313,6 @@ class CameraSystem:
                     if request_data['type'].lower()=='video':
 
                         if request_data['time']>self.last_vid_upload_time:
-                            print(f"INFO: {request_data['length']}, type: {type(request_data['length'])}")
                             try:
                                 self.video_length = int(request_data['length'])*self.TIME_CONVERSION_MULTIPLIER
                                 # Limit requested video length to 1 minute
@@ -365,52 +368,56 @@ class CameraSystem:
         except Exception as e:
             self.logger.error(f'Unable to connect to API: {e.stderr.strip()}')
 
+    def display_frame(self, frame):
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(frame, strftime("%H:%M:%S", localtime()), (10, 30), font, self.FONT_SCALE, (0, 0, 255), self.FONT_THICKNESS, cv2.LINE_AA)
+
+        if self.alarm_mode:
+            frame_bw = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            frame_bw = cv2.GaussianBlur(frame_bw, self.GAUSSIAN_BLUR_KERNEL_SIZE_DIFF, self.GAUSSIAN_BLUR_KERNEL_SIZE)
+            difference = cv2.absdiff(frame_bw, self.start_frame)
+            threshold = cv2.threshold(difference, self.THRESHOLD_VALUE, self.THRESHOLD_MAX, cv2.THRESH_BINARY)[1]
+            self.start_frame = frame_bw
+
+            if threshold.sum() > self.THRESHOLD_SUM: # smaller is more sensitive
+                self.alarm_counter += 1
+            else:
+                if self.alarm_counter > 0:
+                    self.alarm_counter -= 1
+            cv2.imshow("Cam", threshold)
+        else:
+            cv2.imshow("Cam", frame)
+
+    def check_for_requests(self):
+        if int(time()*self.TIME_CONVERSION_MULTIPLIER) - self.last_request > self.REQUEST_CHECK_INTERVAL:
+            self.last_request = int(time()*self.TIME_CONVERSION_MULTIPLIER)
+            if self.check_request_thread is None or not self.check_request_thread.is_alive():
+                self.check_request_thread = threading.Thread(target=self.check_requests, daemon=True)
+                self.check_request_thread.start()
+
+    def save_and_upload_image(self, frame):
+        if int(time()*self.TIME_CONVERSION_MULTIPLIER) - self.last_image_time > self.IMAGE_SAVE_INTERVAL:
+            self.alarm_mode = True
+            self.logger.info("SAVE IMG")
+            self.last_image_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
+            self.img_file_name = strftime("PC_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+            cv2.imwrite(self.img_file_name, frame)
+            self.upload_image_to_dropbox()
+    
+    def upload_image_to_dropbox(self):
+        if len(self.img_file_name) > 0:
+            self.dropbox_img_path = '/MingSec/'+self.img_file_name
+            if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
+                self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
+                self.upload_img_thread.start()
+
     def run(self):
         while True:
             _, frame = self.cap.read()
 
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(frame,strftime("%H:%M:%S", localtime()),(10,30), font, self.FONT_SCALE, (0,0,255), self.FONT_THICKNESS, cv2.LINE_AA)
-
-            if self.alarm_mode:
-                frame_bw = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-                frame_bw = cv2.GaussianBlur(frame_bw, self.GAUSSIAN_BLUR_KERNEL_SIZE_DIFF, self.GAUSSIAN_BLUR_KERNEL_SIZE)
-
-                difference = cv2.absdiff(frame_bw, self.start_frame)
-                threshold = cv2.threshold(difference, self.THRESHOLD_VALUE, self.THRESHOLD_MAX, cv2.THRESH_BINARY)[1]
-                self.start_frame = frame_bw
-
-                if threshold.sum() > self.THRESHOLD_SUM: # smaller is more sensitive
-                    self.alarm_counter += 1
-                else:
-                    if self.alarm_counter > 0:
-                        self.alarm_counter -= 1
-
-                cv2.imshow("Cam", threshold)
-
-            else:
-                cv2.imshow("Cam", frame)
-
-            # Check for requests
-            if int(time()*self.TIME_CONVERSION_MULTIPLIER) - self.last_request > self.REQUEST_CHECK_INTERVAL:
-                self.last_request = int(time()*self.TIME_CONVERSION_MULTIPLIER)
-                if self.check_request_thread is None or not self.check_request_thread.is_alive():
-                    self.check_request_thread = threading.Thread(target=self.check_requests, daemon=True)
-                    self.check_request_thread.start()
-
-            # Save and upload image every 10 minutes
-            if int(time()*self.TIME_CONVERSION_MULTIPLIER) - self.last_image_time > self.IMAGE_SAVE_INTERVAL:
-                # Turn on alarm mode
-                self.alarm_mode = True
-                self.logger.info("SAVE IMG")
-                self.last_image_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
-                self.img_file_name = strftime("PC_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
-                cv2.imwrite(self.img_file_name, frame)
-                if len(self.img_file_name) > 0:
-                    self.dropbox_img_path = '/MingSec/'+self.img_file_name
-                    if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
-                        self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
-                        self.upload_img_thread.start()
+            self.display_frame(frame)
+            self.check_for_requests()
+            self.save_and_upload_image(frame) # Save and upload image every 10 minutes
             
             if self.recording:
                 self.video.write(frame)
