@@ -158,6 +158,9 @@ class CameraSystem:
         if self.dropbox_handler.connected:
             local_file_path = pathlib.Path(self.local_path) / self.img_file_name
             self.dropbox_handler.upload_file(str(local_file_path), self.dropbox_video_path)
+            # if result!="OK":
+            #     self.unsent_videos.append(local_file_path)
+            #     self.logger.error(f'Error uploading video to Dropbox: {result}')
         else:
             local_file_path = pathlib.Path(self.local_path) / self.last_recording
             self.unsent_videos.append(local_file_path)
@@ -208,6 +211,8 @@ class CameraSystem:
     def check_requests(self):
         # self.logger.debug("THREADS: ", threading.active_count()) # for testing
         self.logger.debug(f"THREADS: {threading.active_count()}")
+        print(f"THREADS: {threading.active_count()}")
+        print("DPX CONNECTED?", self.dropbox_handler.connected)
 
         # Upload unsent images and videos
         if len(self.unsent_images) > 0:
@@ -350,16 +355,11 @@ class CameraSystem:
                                         "cat", "/sys/class/thermal/thermal_zone*/temp && ", 
                                         "exit"]
                                 sub_output = subprocess.check_output(command, shell=False)
-                                # ext_report = "EXT TEMP: " + ", ".join(sub_output.decode('utf-8'))
                                 ext_report_raw = sub_output.decode('utf-8')
-
-                                # Create a single string of temperatures
                                 temperatures = ext_report_raw.splitlines()
-                                # Clean and join the temperature values
                                 ext_report = "EXT TEMP: " + ", ".join(temp.strip() for temp in temperatures if temp.strip())
 
-                                self.logger.debug(f"****EXT STATUS**** {ext_report}")
-                                self.logger.debug(f"****EXT STATUS LEN**** {len(ext_report)}")
+                                self.logger.debug(f"EXTERNAL REPORT SENT: {ext_report}")
                                 self.report_status("EXT", ext_report)
                             else:
                                 self.logger.info("STATUS REQUESTED")
@@ -411,6 +411,29 @@ class CameraSystem:
                 self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
                 self.upload_img_thread.start()
 
+    def handle_video_recording(self, frame):
+        if self.recording:
+            self.video.write(frame)
+            if int(time() * self.TIME_CONVERSION_MULTIPLIER) - self.recording_start > self.video_length:
+                self.stop_recording()
+
+    def stop_recording(self):
+        self.logger.info("STOP RECORDING")
+        self.recording_start = 0
+        self.recording = False
+        if len(self.last_recording) > 0:
+            self.file_name = 'recording.avi' # Release last recording
+            self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
+            self.unsent_videos.append(self.last_recording)
+            self.last_recording = ''
+
+    def handle_key_input(self, key_pressed):
+        if key_pressed == ord("t"):
+            self.alarm_mode = not self.alarm_mode
+            self.alarm_counter = 0
+        if key_pressed == ord("q"):
+            return "EXIT"
+
     def run(self):
         while True:
             _, frame = self.cap.read()
@@ -418,22 +441,7 @@ class CameraSystem:
             self.display_frame(frame)
             self.check_for_requests()
             self.save_and_upload_image(frame) # Save and upload image every 10 minutes
-            
-            if self.recording:
-                self.video.write(frame)
-                if int(time() * self.TIME_CONVERSION_MULTIPLIER) - self.recording_start > self.video_length:
-                    self.logger.info("STOP RECORDING")
-                    self.recording_start = 0
-                    self.recording = False
-                    if len(self.last_recording) > 0:
-                        # Release last recording
-                        self.file_name = 'recording.avi'
-                        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
-
-                        self.dropbox_video_path = '/MingSec/'+self.last_recording
-                        if self.upload_vid_thread is None or not self.upload_vid_thread.is_alive():
-                            self.upload_vid_thread = threading.Thread(target=self.dropbox_upload_video, daemon=True)
-                            self.upload_vid_thread.start()
+            self.handle_video_recording(frame)
 
             if self.alarm_counter > self.ALARM_COUNTER_THRESHOLD:
                 if not self.alarm:
@@ -462,16 +470,13 @@ class CameraSystem:
                         self.beep_alarm_thread.start()
 
             key_pressed = cv2.waitKey(self.WAIT_KEY_DELAY)
-            if key_pressed == ord("t"):
-                self.alarm_mode = not self.alarm_mode
-                self.alarm_counter = 0
-
-            if key_pressed == ord("q"):
-                self.alarm_mode = False
+            key_input = self.handle_key_input(key_pressed)
+            if key_input == "EXIT":
                 break
-        self.shutdown()
 
-    def shutdown(self):
+        self.shutDown()
+
+    def shutDown(self):
         self.video.release()
         self.cap.release()
         cv2.destroyAllWindows()
