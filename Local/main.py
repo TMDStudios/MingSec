@@ -190,7 +190,6 @@ class CameraSystem:
         for i in range(self.ALARM_BEEP_COUNT):
             if not self.alarm_mode:
                 break
-            self.logger.warning(f"ALARM...{i}")
             # winsound.Beep(self.BEEP_FREQUENCY, self.BEEP_DURATION) # uncomment for sound
         self.alarm = False
 
@@ -209,10 +208,9 @@ class CameraSystem:
             self.logger.error(f"UNABLE TO SEND STATUS REPORT: {e}")
 
     def check_requests(self):
-        # self.logger.debug("THREADS: ", threading.active_count()) # for testing
         self.logger.debug(f"THREADS: {threading.active_count()}")
-        print(f"THREADS: {threading.active_count()}")
-        print("DPX CONNECTED?", self.dropbox_handler.connected)
+        if self.alarm:
+            self.logger.warning(f"*** ALARM IS ACTIVE ***")
 
         # Upload unsent images and videos
         if len(self.unsent_images) > 0:
@@ -305,15 +303,18 @@ class CameraSystem:
                                 else:
                                     self.logger.error(ssh_result)
                             else:
-                                self.logger.info("IMAGE REQUESTED")
-                                self.img_file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
-                                _, frame = self.cap.read()
-                                cv2.imwrite(self.img_file_name, frame)
-                                if len(self.img_file_name) > 0:
-                                    self.dropbox_img_path = '/MingSec/'+self.img_file_name
-                                    if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
-                                        self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
-                                        self.upload_img_thread.start()
+                                if self.recording:
+                                    self.logger.warning("IMAGE REQUEST IGNORED. CAMERA IS BUSY.")
+                                else:
+                                    self.logger.info("IMAGE REQUESTED")
+                                    self.img_file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                                    _, frame = self.cap.read()
+                                    cv2.imwrite(self.img_file_name, frame)
+                                    if len(self.img_file_name) > 0:
+                                        self.dropbox_img_path = '/MingSec/'+self.img_file_name
+                                        if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
+                                            self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
+                                            self.upload_img_thread.start()
 
                     if request_data['type'].lower()=='video':
 
@@ -325,6 +326,7 @@ class CameraSystem:
                                     self.video_length = self.MAX_VIDEO_LENGTH
                             except:
                                 self.logger.warning("Invalid video length. Using defauld of 10 seconds.")
+                                
                             self.last_vid_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
                             if request_data['camera'].lower()=='external':
                                 self.logger.info("EXT VIDEO REQUESTED")
@@ -337,13 +339,16 @@ class CameraSystem:
                                 else:
                                     self.logger.error(ssh_result)
                             else:
-                                self.last_vid_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
-                                self.logger.info("VIDEO REQUESTED")
-                                self.file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
-                                self.last_recording = self.file_name
-                                self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
-                                self.recording_start = int(time() * self.TIME_CONVERSION_MULTIPLIER)
-                                self.recording = True
+                                if self.recording:
+                                    self.logger.warning("VIDEO REQUEST IGNORED. CAMERA IS BUSY.")
+                                else:
+                                    self.last_vid_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
+                                    self.logger.info("VIDEO REQUESTED")
+                                    self.file_name = strftime("PC_REQUESTED_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
+                                    self.last_recording = self.file_name
+                                    self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
+                                    self.recording_start = int(time() * self.TIME_CONVERSION_MULTIPLIER)
+                                    self.recording = True
 
                     if request_data['type'].lower()=='status':
 
@@ -398,6 +403,7 @@ class CameraSystem:
     def save_and_upload_image(self, frame):
         if int(time()*self.TIME_CONVERSION_MULTIPLIER) - self.last_image_time > self.IMAGE_SAVE_INTERVAL:
             self.alarm_mode = True
+            self.logger.info("ALARM MODE ACTIVATED")
             self.logger.info("SAVE IMG")
             self.last_image_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
             self.img_file_name = strftime("PC_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
@@ -427,9 +433,38 @@ class CameraSystem:
             self.unsent_videos.append(self.last_recording)
             self.last_recording = ''
 
+    def alarm_check(self, frame):
+        if self.alarm_counter > self.ALARM_COUNTER_THRESHOLD:
+            if not self.alarm:
+                self.alarm = True
+                if self.recording_start == 0:
+                    if self.report_alarm_thread is None or not self.report_alarm_thread.is_alive():
+                        self.report_alarm_thread = threading.Thread(target=self.report_alarm, daemon=True)
+                        self.report_alarm_thread.start()
+                    # Alarm Image
+                    self.img_file_name = strftime("PC_ALARM_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
+                    self.logger.warning(f"** ALARM TRIGGERED! RECORDING HAS STARTED. IMAGE HAS BEEN CAPTURED. **")
+                    cv2.imwrite(self.img_file_name, frame)
+                    if len(self.img_file_name) > 0:
+                        self.dropbox_img_path = '/MingSec/'+self.img_file_name
+                        if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
+                            self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
+                            self.upload_img_thread.start()
+
+                    self.file_name = strftime("PC_ALARM_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
+                    self.last_recording = self.file_name
+                    self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
+                    self.recording = True
+                    self.video_length = self.DEFAULT_VIDEO_LENGTH
+                self.recording_start = int(time() * self.TIME_CONVERSION_MULTIPLIER)
+                if self.beep_alarm_thread is None or not self.beep_alarm_thread.is_alive():
+                    self.beep_alarm_thread = threading.Thread(target=self.beep_alarm, daemon=True)
+                    self.beep_alarm_thread.start()
+
     def handle_key_input(self, key_pressed):
         if key_pressed == ord("t"):
             self.alarm_mode = not self.alarm_mode
+            self.logger.info(f"ALARM MODE: {self.alarm_mode}")
             self.alarm_counter = 0
         if key_pressed == ord("q"):
             return "EXIT"
@@ -440,35 +475,9 @@ class CameraSystem:
 
             self.display_frame(frame)
             self.check_for_requests()
-            self.save_and_upload_image(frame) # Save and upload image every 10 minutes
+            self.save_and_upload_image(frame)
             self.handle_video_recording(frame)
-
-            if self.alarm_counter > self.ALARM_COUNTER_THRESHOLD:
-                if not self.alarm:
-                    self.alarm = True
-                    if self.recording_start == 0:
-                        if self.report_alarm_thread is None or not self.report_alarm_thread.is_alive():
-                            self.report_alarm_thread = threading.Thread(target=self.report_alarm, daemon=True)
-                            self.report_alarm_thread.start()
-                        # Alarm Image
-                        self.img_file_name = strftime("PC_ALARM_%Y-%m-%d_%H-%M-%S", localtime())+'.jpg'
-                        cv2.imwrite(self.img_file_name, frame)
-                        if len(self.img_file_name) > 0:
-                            self.dropbox_img_path = '/MingSec/'+self.img_file_name
-                            if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
-                                self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
-                                self.upload_img_thread.start()
-
-                        self.file_name = strftime("PC_ALARM_%Y-%m-%d_%H-%M-%S", localtime())+'.avi'
-                        self.last_recording = self.file_name
-                        self.video = cv2.VideoWriter(self.file_name, VideoWriter_fourcc(*'XVID'), self.FRAME_RATE, (self.FRAME_WIDTH, self.FRAME_HEIGHT))
-                        self.recording = True
-                        self.video_length = self.DEFAULT_VIDEO_LENGTH
-                    self.recording_start = int(time() * self.TIME_CONVERSION_MULTIPLIER)
-                    if self.beep_alarm_thread is None or not self.beep_alarm_thread.is_alive():
-                        self.beep_alarm_thread = threading.Thread(target=self.beep_alarm, daemon=True)
-                        self.beep_alarm_thread.start()
-
+            self.alarm_check(frame)
             key_pressed = cv2.waitKey(self.WAIT_KEY_DELAY)
             key_input = self.handle_key_input(key_pressed)
             if key_input == "EXIT":
