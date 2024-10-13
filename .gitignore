@@ -5,6 +5,7 @@
 *.sqlite3
 *.db
 .env
+/local/*log*.txt
 todo.txt
 
 # Python bytecode files

@@ -42,5 +42,9 @@
     },
     "key_delay": {
       "wait_key_delay": 30
+    },
+    "log": {
+      "name": "log",
+      "dropbox_path": "/MingSec/log"
     }
 }

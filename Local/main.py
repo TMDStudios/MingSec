@@ -67,6 +67,10 @@ class CameraSystem:
     # Key delay
     WAIT_KEY_DELAY = config['key_delay']['wait_key_delay']
 
+    # Log file
+    LOG_FILE = config['log']['name']+strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.txt'
+    LOG_FILE_DROPBOX_PATH = config['log']['dropbox_path']+strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.txt'
+
     def __init__(self) -> None:
         load_dotenv()
         self.DROPBOX_APP_KEY = os.environ['DROPBOX_APP_KEY']
@@ -102,10 +106,32 @@ class CameraSystem:
 
         # Logging
         self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        # logging.basicConfig(
+        #     level=logging.INFO, 
+        #     format='%(asctime)s - %(levelname)s - %(message)s',
+        #     filename=self.LOG_FILE,
+        #     filemode='a'
+        # )
+        self.logger.setLevel(logging.INFO)
+
+        file_handler = logging.FileHandler(self.LOG_FILE)
+        console_handler = logging.StreamHandler()
+
+        file_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.INFO)
+
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(console_handler)
+
+        self.unsent_log = False
 
         # Dropbox vars
         self.local_path = '.'
+        self.dropbox_log_path = ''
         self.dropbox_img_path = ''
         self.dropbox_video_path = ''
         self.unsent_images = []
@@ -132,18 +158,33 @@ class CameraSystem:
         self.report_alarm_thread = None
         self.beep_alarm_thread = None
 
-    def run_external_command(self, command):
-        try:
-            result = subprocess.run(command, check=True, capture_output=True, text=True)
-            if "could not open the camera" in result.stdout.lower() or "camera index out of range" in result.stderr.lower():
+    def run_external_command(self, command, ext_status=False):
+        if ext_status:
+            try:
+                result = subprocess.run(command, check=True, capture_output=True, text=True)
+                return "OK"
+            except (subprocess.CalledProcessError, RuntimeError) as e:
+                return "UNABLE TO REACH EXTERNAL DEVICE"
+        else:
+            try:
+                result = subprocess.run(command, check=True, capture_output=True, text=True)
+                if "could not open the camera" in result.stdout.lower() or "camera index out of range" in result.stderr.lower():
+                    self.external_image = ''
+                    self.external_video = ''
+                    return "EXTERNAL CAMERA ERROR"
+                return "OK"
+            except (subprocess.CalledProcessError, RuntimeError) as e:
                 self.external_image = ''
                 self.external_video = ''
                 return "EXTERNAL CAMERA ERROR"
-            return "OK"
-        except (subprocess.CalledProcessError, RuntimeError) as e:
-            self.external_image = ''
-            self.external_video = ''
-            return "EXTERNAL CAMERA ERROR"
+        
+    def dropbox_upload_log(self):
+        if self.dropbox_handler.connected:
+            local_file_path = pathlib.Path(self.local_path) / self.LOG_FILE
+            self.dropbox_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
+        else:
+            self.unsent_log = True
+            self.logger.error(f'Error uploading log to Dropbox')
 
     def dropbox_upload_img(self):
         if self.dropbox_handler.connected:
@@ -156,7 +197,7 @@ class CameraSystem:
 
     def dropbox_upload_video(self):
         if self.dropbox_handler.connected:
-            local_file_path = pathlib.Path(self.local_path) / self.img_file_name
+            local_file_path = pathlib.Path(self.local_path) / self.last_recording
             self.dropbox_handler.upload_file(str(local_file_path), self.dropbox_video_path)
             # if result!="OK":
             #     self.unsent_videos.append(local_file_path)
@@ -175,13 +216,18 @@ class CameraSystem:
                     dpx_path = '/MingSec/'+str(i)
                     self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
                 self.unsent_images.clear()
-            else:
+            elif type=='video':
                 self.logger.info(f"UPLOADING {len(self.unsent_videos)} UNSENT VIDEOS")
                 for i in self.unsent_videos:
                     local_file_path = pathlib.Path(self.local_path) / str(i)
                     dpx_path = '/MingSec/'+str(i)
                     self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
                 self.unsent_videos.clear()
+            else:
+                self.logger.info(f"UPLOADING LOG")
+                local_file_path = pathlib.Path(self.local_path) / self.LOG_FILE
+                self.dropbox_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
+                self.unsent_log = False
         else:
             self.logger.warning("NO DROPBOX CONNECTION FOUND, ESTABLISHING NEW CONNECTION...")
             self.dropbox_handler.dbx = self.dropbox_handler.connect()
@@ -212,11 +258,13 @@ class CameraSystem:
         if self.alarm:
             self.logger.warning(f"*** ALARM IS ACTIVE ***")
 
-        # Upload unsent images and videos
+        # Upload unsent images, videos, and log
         if len(self.unsent_images) > 0:
             self.dropbox_upload_unsent('image')
         if len(self.unsent_videos) > 0:
             self.dropbox_upload_unsent('video')
+        if self.unsent_log:
+            self.dropbox_upload_unsent('log')
 
         try:
             self.logger.info("CHECKING FOR REQUESTS")
@@ -359,15 +407,20 @@ class CameraSystem:
                                 command = ["ssh", self.EXTERNAL_DEVICE_NAME, "cd", self.EXTERNAL_DEVICE_PATH+" && ", 
                                         "cat", "/sys/class/thermal/thermal_zone*/temp && ", 
                                         "exit"]
-                                sub_output = subprocess.check_output(command, shell=False)
-                                ext_report_raw = sub_output.decode('utf-8')
-                                temperatures = ext_report_raw.splitlines()
-                                ext_report = "EXT TEMP: " + ", ".join(temp.strip() for temp in temperatures if temp.strip())
+                                ssh_result = self.run_external_command(command, True)
+                                if ssh_result == "OK":
+                                    sub_output = subprocess.check_output(command, shell=False)
+                                    ext_report_raw = sub_output.decode('utf-8')
+                                    temperatures = ext_report_raw.splitlines()
+                                    ext_report = "EXT TEMP: " + ", ".join(temp.strip() for temp in temperatures if temp.strip())
 
-                                self.logger.debug(f"EXTERNAL REPORT SENT: {ext_report}")
-                                self.report_status("EXT", ext_report)
+                                    self.logger.debug(f"EXTERNAL REPORT SENT: {ext_report}")
+                                    self.report_status("EXT", ext_report)
+                                else:
+                                    self.logger.error(ssh_result)
                             else:
                                 self.logger.info("STATUS REQUESTED")
+                                self.dropbox_upload_log()
                                 self.report_status("PC", "OK")
 
         except Exception as e:
