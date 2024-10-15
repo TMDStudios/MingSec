@@ -76,11 +76,16 @@ class CameraSystem:
         self.DROPBOX_APP_KEY = os.environ['DROPBOX_APP_KEY']
         self.DROPBOX_APP_SECRET = os.environ['DROPBOX_APP_SECRET']
         self.DROPBOX_REFRESH_TOKEN = os.environ['DROPBOX_REFRESH_TOKEN']
+
+        self.MINGSEC_API_KEY = os.environ['MINGSEC_API_KEY']
         self.CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
         self.ALARM_REPORT_ENDPOINT = os.environ['ALARM_REPORT_ENDPOINT']
         self.STATUS_REPORT_ENDPOINT = os.environ['STATUS_REPORT_ENDPOINT']
+
         self.EXTERNAL_DEVICE_NAME = os.environ['EXTERNAL_DEVICE_NAME']
         self.EXTERNAL_DEVICE_PATH = os.environ['EXTERNAL_DEVICE_PATH']
+
+        self.headers = {'Authorization': 'Bearer '+self.MINGSEC_API_KEY}
 
         self.cap = cv2.VideoCapture(self.CAMERA_INDEX, cv2.CAP_DSHOW)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.FRAME_WIDTH)
@@ -106,12 +111,6 @@ class CameraSystem:
 
         # Logging
         self.logger = logging.getLogger(__name__)
-        # logging.basicConfig(
-        #     level=logging.INFO, 
-        #     format='%(asctime)s - %(levelname)s - %(message)s',
-        #     filename=self.LOG_FILE,
-        #     filemode='a'
-        # )
         self.logger.setLevel(logging.INFO)
 
         file_handler = logging.FileHandler(self.LOG_FILE)
@@ -241,14 +240,14 @@ class CameraSystem:
 
     def report_alarm(self):
         try:
-            r = requests.post(self.ALARM_REPORT_ENDPOINT, json={'camera':'PC'})
+            r = requests.post(self.ALARM_REPORT_ENDPOINT, headers=self.headers, json={'camera':'PC'})
             self.logger.info(f"ALARM REPORT SENT {r.text}")
         except Exception as e:
             self.logger.error(f"UNABLE TO SEND ALARM REPORT: {e}")
 
     def report_status(self, camera, temperature):
         try:
-            r = requests.post(self.STATUS_REPORT_ENDPOINT, json={'camera':camera, 'status':temperature})
+            r = requests.post(self.STATUS_REPORT_ENDPOINT, headers=self.headers, json={'camera':camera, 'status':temperature})
             self.logger.info(f"STATUS REPORT SENT {r.text}")
         except Exception as e:
             self.logger.error(f"UNABLE TO SEND STATUS REPORT: {e}")
@@ -322,7 +321,7 @@ class CameraSystem:
                         self.logger.error(ssh_result)
                     self.external_video = ''
 
-            req = requests.get(self.CAM_REQUEST_ENDPOINT)
+            req = requests.get(self.CAM_REQUEST_ENDPOINT, headers=self.headers)
             json_array = []
             if req.status_code == 200:
                 try:
@@ -424,7 +423,7 @@ class CameraSystem:
                                 self.report_status("PC", "OK")
 
         except Exception as e:
-            self.logger.error(f'Unable to connect to API: {e.stderr.strip()}')
+            self.logger.error(f'Unable to connect to API: {str(e)}')
 
     def display_frame(self, frame):
         font = cv2.FONT_HERSHEY_SIMPLEX
