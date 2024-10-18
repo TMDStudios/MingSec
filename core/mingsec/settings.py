@@ -133,3 +133,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'frontend:home'
 LOGOUT_REDIRECT_URL = 'frontend:home'
+
+# Session cookie settings
+# Ensures that the session cookie is only sent over HTTPS (should be enabled for production)
+SESSION_COOKIE_SECURE = True
+
+# Prevents JavaScript from accessing the session cookie (helps mitigate XSS attacks)
+SESSION_COOKIE_HTTPONLY = True
+
+# Sets the age of session cookies (in seconds), here set to 30 minutes (1800 seconds)
+SESSION_COOKIE_AGE = 1800  # 30 minutes
+
+# This ensures that the session will expire if the user is inactive for more than SESSION_COOKIE_AGE
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Optionally, you can set this to True to invalidate old sessions on login
+SESSION_SAVE_EVERY_REQUEST = True

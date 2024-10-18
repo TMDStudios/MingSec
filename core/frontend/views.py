@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
+from .forms import CamRequestForm
 from base.models import CamRequest, AlarmReport, StatusReport
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
 
 def home(request):
-    return render(request, 'home.html')
+    form = CamRequestForm()
+    return render(request, 'home.html', {'form': form})
 
 def login(request):
     form = AuthenticationForm(data=request.POST or None)
@@ -19,27 +22,19 @@ def login(request):
 
     return render(request, 'login.html', {'form': form})
 
+@login_required
 def submitCamRequest(request):
-    if request.method == 'GET':
-        return render(request, 'home.html')
-    
-    cam_type = request.POST['type']
-    camera = request.POST['camera']
-    ip = get_client_ip(request)
-    length = 10000 # in milliseconds
-
-    if cam_type == 'video':
-        try:
-            form_length = int(request.POST['length'])*1000
-            if form_length > 0 and form_length < 60000:
-                length = form_length
-        except ValueError:
-            pass
-
-    camRequest = CamRequest(type=cam_type, camera=camera, ip=ip, length=length)
-    camRequest.save()
-
-    return redirect("frontend:home")
+    if request.method=='POST':
+        form = CamRequestForm(request.POST)
+        if form.is_valid():
+            cam_type = form.cleaned_data['cam_type']
+            camera = form.cleaned_data['camera']
+            length = form.cleaned_data.get('length', 10) * 1000  # Defaults to 10 seconds if not provided
+            ip = get_client_ip(request)
+            
+            camRequest = CamRequest(type=cam_type, camera=camera, ip=ip, length=length)
+            camRequest.save()
+            return redirect("frontend:home")
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')

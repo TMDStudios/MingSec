@@ -9,23 +9,23 @@
     {% if user.is_authenticated %}
         <div>
             <h1>Camera Request</h1>
-            <form action="/request" method="POST">
+            <form method="POST" action="/request">
                 {% csrf_token %}
-                <label for="type" >Request Type:</label>
-                <select name="type" id="type">
-                    <option value="image">Image</option>
-                    <option value="video">Video</option>
-                    <option value="status">Status</option>
-                </select>
-                <label for="camera" >Select Camera:</label>
-                <select name="camera" id="camera">
-                    <option value="pc">Main</option>
-                    <option value="external">External</option>
-                </select>
-                <label for="length" >Video Length (Optional):</label>
-                <input type="number" id="length" name="length" placeholder="Defaults to 10 seconds">
+                <p>
+                    <label for="id_cam_type">Request Type:</label>
+                    {{ form.cam_type }}
+                </p>
+                <p>
+                    <label for="id_camera">Select Camera:</label>
+                    {{ form.camera }}
+                </p>
+                <p>
+                    <label for="id_length">Video Length (Optional):</label>
+                    {{ form.length }}
+                </p>
                 <input type="submit" value="Submit">
-            </form> 
+            </form>
+            
             <p><a href="{% url 'frontend:logout' %}">Log Out</a></p>
         </div>
     {% else %}
