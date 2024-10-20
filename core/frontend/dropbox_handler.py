@@ -2,13 +2,14 @@ import dropbox
 from dropbox.exceptions import AuthError
 
 class DropboxHandler:
-    def __init__(self, app_key, app_secret, refresh_token, logger, log_handler=False):
+    DROPBOX_PATH =  "/MingSec/"
+    def __init__(self, app_key, app_secret, refresh_token, logger):
         self.app_key = app_key
         self.app_secret = app_secret
         self.refresh_token = refresh_token
         self.logger = logger
         self.connected = False
-        self.log_handler = log_handler
+        self.log_files = []
         self.dbx = self.connect()
 
     def connect(self):
@@ -20,10 +21,7 @@ class DropboxHandler:
             )
             dbx.users_get_current_account() # Confirm connection
             self.connected = True
-            if self.log_handler:
-                self.logger.info("Successfully connected to Dropbox Log Handler.")
-            else:
-                self.logger.info("Successfully connected to Dropbox.")
+            self.logger.info("Successfully connected to Dropbox Log Handler.")
             return dbx
         except AuthError as e:
             self.logger.error(f'Error connecting to Dropbox with access token: {e}')
@@ -34,12 +32,24 @@ class DropboxHandler:
             self.connected = False
             return None
 
-    def upload_file(self, local_path, dropbox_path):
+    def get_logs(self):
+        self.log_files = []
         try:
-            with open(local_path, "rb") as f:
-                self.dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode("overwrite"))
-                self.logger.info(f"File uploaded to {dropbox_path}")
+            response = self.dbx.files_list_folder(path=self.DROPBOX_PATH)
+            for entry in response.entries:
+                self.log_files.append(entry.name)
+                print(entry.name)
 
-                return "OK"
+            self.log_files.reverse()
+            return "OK"
         except Exception as e:
-            self.logger.error(f'Error uploading file to Dropbox: {e}')
+            self.logger.error(f'Error fetching logs from Dropbox: {e}')
+    
+    def view_log(self, log_file="log.txt"):
+        try:
+            self.logger.info(f"Fetching log data for log index: {log_file}")
+            metadata, res = self.dbx.files_download(path=self.DROPBOX_PATH+log_file)
+            log_data = res.content.decode('utf-8').splitlines()
+            return log_data
+        except Exception as e:
+            self.logger.error(f'Error reading log file: {e}')

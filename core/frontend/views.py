@@ -4,10 +4,60 @@ from base.models import CamRequest, AlarmReport, StatusReport
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
+from .dropbox_handler import DropboxHandler
+
+from dotenv.main import load_dotenv
+import os
+import logging
+
+# Logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+load_dotenv()
+DROPBOX_APP_KEY_RW = os.environ['DROPBOX_APP_KEY_RW']
+DROPBOX_APP_SECRET_RW = os.environ['DROPBOX_APP_SECRET_RW']
+DROPBOX_REFRESH_TOKEN_RW = os.environ['DROPBOX_REFRESH_TOKEN_RW']
+dropbox_handler = DropboxHandler(DROPBOX_APP_KEY_RW, DROPBOX_APP_SECRET_RW, DROPBOX_REFRESH_TOKEN_RW, logger)
 
 def home(request):
+    """Render the home page with log files and the selected log data."""
+
+    log_files = []
+    selected_log = ''
+    log_data = ''
+
+    current_log = request.session.get('current_log', 0)
+    current_log_param = request.GET.get('log_index', None)
+
+    if dropbox_handler.connected:
+        if dropbox_handler.get_logs() == "OK":
+            log_files = dropbox_handler.log_files
+
+            if current_log_param is not None:
+                try:
+                    current_log = int(current_log_param)
+                    if current_log < 0 or current_log >= len(log_files):
+                        logger.warning("Selected log index out of range. Resetting to 0.")
+                        current_log = 0
+                except ValueError:
+                    logger.error("Invalid log index provided")
+                    current_log = 0
+            
+            request.session['current_log'] = current_log
+            
+            if log_files:
+                selected_log = log_files[current_log]
+                log_data = dropbox_handler.view_log(selected_log)
+
+            log_data = dropbox_handler.view_log(selected_log)
+        else:
+            logger.error("UNABLE TO FETCH LOGS")
+    else:
+        logger.warning("NO DROPBOX CONNECTION FOUND, ESTABLISHING NEW CONNECTION...")
+        dropbox_handler.dbx = dropbox_handler.connect()
     form = CamRequestForm()
-    return render(request, 'home.html', {'form': form})
+    return render(request, 'home.html', {'form': form, 'log_files': log_files, 'log_data': log_data})
 
 def login(request):
     form = AuthenticationForm(data=request.POST or None)

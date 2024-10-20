@@ -186,8 +186,6 @@ class CameraSystem:
         if self.dropbox_log_handler.connected:
             local_file_path = pathlib.Path(self.local_path) / self.LOG_FILE
             self.dropbox_log_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
-            # Log file testing
-            self.dropbox_log_handler.get_file(self.LOG_FILE_DROPBOX_PATH)
         else:
             self.unsent_log = True
             self.logger.error(f'Error uploading log to Dropbox')

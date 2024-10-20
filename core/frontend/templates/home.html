@@ -28,6 +28,24 @@
             
             <p><a href="{% url 'frontend:logout' %}">Log Out</a></p>
         </div>
+        <hr>
+        <div>
+            <h3>Log Files</h3>
+            <div>
+                {% for f in log_files %}
+                    <p><a href="?log_index={{ forloop.counter0 }}">{{ f }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+        <hr>
+        <div>
+            <h3>Selected Log</h3>
+            <div>
+                {% for line in log_data %}
+                    <p>{{ line }}</p>
+                {% endfor %}
+            </div>
+        </div>
     {% else %}
         <div>
             <h2>Log in to start</h2>
