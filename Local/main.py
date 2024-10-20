@@ -77,6 +77,10 @@ class CameraSystem:
         self.DROPBOX_APP_SECRET = os.environ['DROPBOX_APP_SECRET']
         self.DROPBOX_REFRESH_TOKEN = os.environ['DROPBOX_REFRESH_TOKEN']
 
+        self.DROPBOX_APP_KEY_RW = os.environ['DROPBOX_APP_KEY_RW']
+        self.DROPBOX_APP_SECRET_RW = os.environ['DROPBOX_APP_SECRET_RW']
+        self.DROPBOX_REFRESH_TOKEN_RW = os.environ['DROPBOX_REFRESH_TOKEN_RW']
+
         self.MINGSEC_API_KEY = os.environ['MINGSEC_API_KEY']
         self.CAM_REQUEST_ENDPOINT = os.environ['CAM_REQUEST_ENDPOINT']
         self.ALARM_REPORT_ENDPOINT = os.environ['ALARM_REPORT_ENDPOINT']
@@ -136,6 +140,7 @@ class CameraSystem:
         self.unsent_images = []
         self.unsent_videos = []
         self.dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN, self.logger)
+        self.dropbox_log_handler = DropboxHandler(self.DROPBOX_APP_KEY_RW, self.DROPBOX_APP_SECRET_RW, self.DROPBOX_REFRESH_TOKEN_RW, self.logger, True)
 
         self.last_img_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
         self.last_vid_upload_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
@@ -178,9 +183,11 @@ class CameraSystem:
                 return "EXTERNAL CAMERA ERROR"
         
     def dropbox_upload_log(self):
-        if self.dropbox_handler.connected:
+        if self.dropbox_log_handler.connected:
             local_file_path = pathlib.Path(self.local_path) / self.LOG_FILE
-            self.dropbox_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
+            self.dropbox_log_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
+            # Log file testing
+            self.dropbox_log_handler.get_file(self.LOG_FILE_DROPBOX_PATH)
         else:
             self.unsent_log = True
             self.logger.error(f'Error uploading log to Dropbox')
@@ -207,7 +214,7 @@ class CameraSystem:
             self.logger.error(f'Error uploading video to Dropbox: {local_file_path}')
 
     def dropbox_upload_unsent(self, type):
-        if self.dropbox_handler.connected:
+        if self.dropbox_handler.connected and self.dropbox_log_handler.connected:
             if type=='image':
                 self.logger.info(f"UPLOADING {len(self.unsent_images)} UNSENT IMAGES")
                 for i in self.unsent_images:
@@ -225,11 +232,12 @@ class CameraSystem:
             else:
                 self.logger.info(f"UPLOADING LOG")
                 local_file_path = pathlib.Path(self.local_path) / self.LOG_FILE
-                self.dropbox_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
+                self.dropbox_log_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
                 self.unsent_log = False
         else:
             self.logger.warning("NO DROPBOX CONNECTION FOUND, ESTABLISHING NEW CONNECTION...")
             self.dropbox_handler.dbx = self.dropbox_handler.connect()
+            self.dropbox_log_handler.dbx = self.dropbox_log_handler.connect()
 
     def beep_alarm(self):
         for i in range(self.ALARM_BEEP_COUNT):
