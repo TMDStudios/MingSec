@@ -20,6 +20,7 @@ DROPBOX_APP_SECRET_RW = os.environ['DROPBOX_APP_SECRET_RW']
 DROPBOX_REFRESH_TOKEN_RW = os.environ['DROPBOX_REFRESH_TOKEN_RW']
 dropbox_handler = DropboxHandler(DROPBOX_APP_KEY_RW, DROPBOX_APP_SECRET_RW, DROPBOX_REFRESH_TOKEN_RW, logger)
 
+@login_required
 def home(request):
     """Render the home page with log files and the selected log data."""
 

@@ -7,6 +7,6 @@ app_name = 'frontend'
 urlpatterns = [
     path('', views.home, name='home'),
     path('login/', views.login, name='login'),
-    path('request', views.submitCamRequest, name='submitCamRequest'),
+    path('request/', views.submitCamRequest, name='submitCamRequest'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]

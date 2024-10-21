@@ -38,7 +38,6 @@ class DropboxHandler:
             response = self.dbx.files_list_folder(path=self.DROPBOX_PATH)
             for entry in response.entries:
                 self.log_files.append(entry.name)
-                print(entry.name)
 
             self.log_files.reverse()
             return "OK"

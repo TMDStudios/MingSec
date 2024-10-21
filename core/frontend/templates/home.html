@@ -9,7 +9,7 @@
     {% if user.is_authenticated %}
         <div>
             <h1>Camera Request</h1>
-            <form method="POST" action="/request">
+            <form method="POST" action="/request/">
                 {% csrf_token %}
                 <p>
                     <label for="id_cam_type">Request Type:</label>
@@ -45,13 +45,6 @@
                     <p>{{ line }}</p>
                 {% endfor %}
             </div>
-        </div>
-    {% else %}
-        <div>
-            <h2>Log in to start</h2>
-        </div>
-        <div>
-            <p><a href="{% url 'frontend:login' %}">Log In</a></p>
         </div>
     {% endif %}
 {% endblock %}
