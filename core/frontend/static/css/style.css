@@ -8,3 +8,11 @@ body {
     width: 1080px;
     margin: auto;
 }
+.log-link {
+    text-decoration: none;
+    color: lightblue;
+}
+.log-link:hover {
+    color: aqua;
+    cursor: pointer;
+}

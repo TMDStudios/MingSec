@@ -1,9 +1,6 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-    MingSec
-{% endblock %}
-
+{% load static %}
 
 {% block content %}
     {% if user.is_authenticated %}
@@ -31,20 +28,25 @@
         <hr>
         <div>
             <h3>Log Files</h3>
-            <div>
+            <div id="log-file-links">
                 {% for f in log_files %}
-                    <p><a href="?log_index={{ forloop.counter0 }}">{{ f }}</a></p>
+                    <p><a href="#" class="log-link" data-log-file="{{ f }}">{{ f }}</a></p>
                 {% endfor %}
             </div>
         </div>
         <hr>
         <div>
             <h3>Selected Log</h3>
-            <div>
+            <div id="loading-message" style="display: none;">Loading...</div>
+            <div id="log-content">
                 {% for line in log_data %}
                     <p>{{ line }}</p>
                 {% endfor %}
             </div>
-        </div>
+        </div>        
     {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'js/app.js' %}"></script>  {# Load your JavaScript file here #}
 {% endblock %}
