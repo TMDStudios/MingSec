@@ -4,46 +4,56 @@
 
 {% block content %}
     {% if user.is_authenticated %}
-        <div>
-            <h1>Camera Request</h1>
-            <form method="POST" action="/request/">
-                {% csrf_token %}
-                <p>
-                    <label for="id_cam_type">Request Type:</label>
-                    {{ form.cam_type }}
-                </p>
-                <p>
-                    <label for="id_camera">Select Camera:</label>
-                    {{ form.camera }}
-                </p>
-                <p>
-                    <label for="id_length">Video Length (Optional):</label>
-                    {{ form.length }}
-                </p>
-                <input type="submit" value="Submit">
-            </form>
-            
-            <p><a href="{% url 'frontend:logout' %}">Log Out</a></p>
-        </div>
-        <hr>
-        <div>
-            <h3>Log Files</h3>
-            <div id="log-file-links">
-                {% for f in log_files %}
-                    <p><a href="#" class="log-link" data-log-file="{{ f }}">{{ f }}</a></p>
-                {% endfor %}
+        <div class="home">
+            <div class="logo">
+                <img src="{% static 'media/MingSecLogo.png' %}" alt="Ming Sec Logo">
+            </div>
+            <div class="cam-request">
+                <h3>Camera Request</h3>
+                <hr>
+                <form method="POST" action="/request/">
+                    {% csrf_token %}
+                    <div>
+                        <label for="id_cam_type">Request Type:</label>
+                        <div class="input">{{ form.cam_type }}</div>
+                    </div>
+                    <div>
+                        <label for="id_camera">Select Camera:</label>
+                        <div class="input">{{ form.camera }}</div>
+                    </div>
+                    <div>
+                        <label for="id_length">Video Length (Optional):</label>
+                        <div class="input">{{ form.length }}</div>
+                    </div>
+                    <div>
+                        <input type="submit" value="Submit">
+                    </div>
+                </form>
+            </div>
+
+            <div class="logs">
+                <div class="log-list">
+                    <h3>Log Files</h3>
+                    <hr>
+                    <div id="log-file-links">
+                        {% for f in log_files %}
+                            <p><a href="#" class="log-link" data-log-file="{{ f }}">{{ f }}</a></p>
+                        {% endfor %}
+                    </div>
+                </div>
+    
+                <div class="selected-log">
+                    <h3>Selected Log</h3>
+                    <hr>
+                    <div id="loading-message" style="display: none;">Loading...</div>
+                    <div id="log-content">
+                        {% for line in log_data %}
+                            <p>{{ line }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
-        <hr>
-        <div>
-            <h3>Selected Log</h3>
-            <div id="loading-message" style="display: none;">Loading...</div>
-            <div id="log-content">
-                {% for line in log_data %}
-                    <p>{{ line }}</p>
-                {% endfor %}
-            </div>
-        </div>        
     {% endif %}
 {% endblock %}
 

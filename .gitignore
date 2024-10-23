@@ -23,9 +23,6 @@ __pycache__/
 # Static files collected by Django
 staticfiles/
 
-# Media files
-media/
-
 # Django migrations (should be committed to version control)
 !*/migrations/__init__.py
 
