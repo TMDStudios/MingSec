@@ -6,7 +6,9 @@
     {% if user.is_authenticated %}
         <div class="home">
             <div class="logo">
+                <img class="logoExt" src="{% static 'media/MingSecLogoExtension.png' %}" alt="Ming Sec Logo">
                 <img src="{% static 'media/MingSecLogo.png' %}" alt="Ming Sec Logo">
+                <img class="logoExt" src="{% static 'media/MingSecLogoExtension.png' %}" alt="Ming Sec Logo">
             </div>
             <div class="cam-request">
                 <h3>Camera Request</h3>
@@ -26,7 +28,7 @@
                         <div class="input">{{ form.length }}</div>
                     </div>
                     <div>
-                        <input type="submit" value="Submit">
+                        <input type="submit" value="SUBMIT">
                     </div>
                 </form>
             </div>
@@ -45,10 +47,10 @@
                 <div class="selected-log">
                     <h3>Selected Log</h3>
                     <hr>
-                    <div id="loading-message" style="display: none;">Loading...</div>
+                    <div id="loading-message" >Loading...</div>
                     <div id="log-content">
                         {% for line in log_data %}
-                            <p>{{ line }}</p>
+                            <p class="log-line">{{ line }}</p>
                         {% endfor %}
                     </div>
                 </div>

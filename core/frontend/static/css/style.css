@@ -1,27 +1,31 @@
 * {
     padding: 0;
     margin: 0;
-    box-sizing: border-box; /* Include padding and border in width/height */
+    box-sizing: border-box;
+    font-family: 'Consolas','Trebuchet MS', 'Lucida Sans Unicode', Verdana, sans-serif, Arial;
 }
 body {
     background-color: rgb(5, 10, 5);
-    color: green;
+    color: lightgreen;
     width: 1080px;
     height: 720px;
     margin: auto;
-    font-family: 'Courier New', Courier, 'Lucida Console', monospace;
 }
-input, select {
-    font-family: 'Courier New', Courier, 'Lucida Console', monospace;
-}
-.home {
+.home, .login {
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
+    margin-top: 1rem;
 }
 .logo {
     margin: auto;
+    display: flex;
+    width: 100%;
+    max-height: 113px;
+}
+.logoExt {
+    width: 100%;
 }
 .home hr {
     margin: 1rem 0;
@@ -54,18 +58,22 @@ input, select {
     flex-grow: 4;
 }
 .cam-request form div input, select {
-    font-weight: bold;
-    color: green;
-    border: 1px solid rgba(144, 238, 144, 0.75);;
-    background-color: rgb(5, 20, 5);
+    color: lightgreen;
+    border: 1px solid rgba(144, 238, 144, 0.25);
+    background-color: rgb(5, 10, 5);
     width: 100%;
     padding: 4px 12px;
+    font-weight: bold;
+}
+.cam-request form div input {
+    padding: 4px 16px;
 }
 .cam-request form div input:hover {
-    background-color: rgba(144, 238, 144, 0.75);;
+    background-color: rgba(144, 238, 144, 0.75);
+    color: rgb(5, 20, 5);
 }
 .logs {
-    width: fit-content;
+    width: 100%;
     height: 500px;
     display: flex;
     gap: 1rem;
@@ -79,18 +87,35 @@ input, select {
     height: 100%;
     min-height: 100%;
     background-color: rgb(5, 20, 5);
+    overflow: hidden;
+}
+#log-content {
+    max-height: 400px;
+    overflow-y: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+#log-content::-webkit-scrollbar {
+    display: none;
+}
+.log-line:hover {
+    background-color: lightgreen;
+    color: rgb(5, 20, 5);
+    cursor: default;
+}
+#loading-message {
+    display: none;
 }
 .cam-request, .log-list, .selected-log {
     border: 1px solid rgba(144, 238, 144, 0.75);
     padding: 2rem;
 }
-
 .log-link {
     text-decoration: none;
-    color: green;
+    color: lightgreen;
 }
 .log-link:hover {
     background-color: lightgreen;
-    color: darkgreen;
+    color: rgb(5, 20, 5);
     cursor: pointer;
 }

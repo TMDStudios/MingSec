@@ -18,6 +18,7 @@ if(window.location.pathname === '/'){
                     data.log_data.forEach(line => {
                         const p = document.createElement('p');
                         p.textContent = line;
+                        p.classList.add('log-line');
                         logContentDiv.appendChild(p);
                     });
                 })
