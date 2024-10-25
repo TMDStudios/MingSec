@@ -7,7 +7,7 @@
         <div class="home">
             <div class="logo">
                 <img class="logoExt" src="{% static 'media/MingSecLogoExtension.png' %}" alt="Ming Sec Logo">
-                <img src="{% static 'media/MingSecLogo.png' %}" alt="Ming Sec Logo">
+                <img class="logoMain" src="{% static 'media/MingSecLogo.png' %}" alt="Ming Sec Logo">
                 <img class="logoExt" src="{% static 'media/MingSecLogoExtension.png' %}" alt="Ming Sec Logo">
             </div>
             <div class="cam-request">
@@ -24,7 +24,7 @@
                         <div class="input">{{ form.camera }}</div>
                     </div>
                     <div>
-                        <label for="id_length">Video Length (Optional):</label>
+                        <label for="id_length">Video Length:</label>
                         <div class="input">{{ form.length }}</div>
                     </div>
                     <div>

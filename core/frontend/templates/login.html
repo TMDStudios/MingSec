@@ -15,14 +15,24 @@
         </div>
         <h2>Login</h2>
         <hr>
-        <div class="form-group" style="width: 50%; height: 100%; margin: auto;">
+        <div class="form-group">
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-                {{ form.media }}
-                {{ form }}
-                <br/>
-                <button type="submit">Login</button>
+                <div>
+                    <label for="id_cam_type">Username:</label>
+                    <div class="input">{{ form.username }}</div>
+                </div>
+                <div>
+                    <label for="id_cam_type">Password:</label>
+                    <div class="input">{{ form.password }}</div>
+                </div>
+                <div>
+                    <input type="submit" value="LOG IN">
+                </div>
             </form>
         </div>
     </div>
+{% endblock %}
+{% block scripts %}
+    <script src="{% static 'js/app.js' %}"></script>  {# Load your JavaScript file here #}
 {% endblock %}
