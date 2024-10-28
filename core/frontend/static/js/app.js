@@ -1,3 +1,13 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme') || 'green';
+    setTheme(savedTheme);
+});
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+}
+
 // Only use for home page
 if(window.location.pathname === '/'){
     document.querySelectorAll('.log-link').forEach(link => {
