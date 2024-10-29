@@ -204,7 +204,20 @@ input:hover::placeholder {
 
 .log-list {
     flex: 1;
+    height: 100%;
+    min-height: 100%;
     background-color: var(--bg-color);
+    overflow: hidden;
+}
+
+.logs-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.logs-header button {
+    width: 10ch;
+    font-weight: bold;
 }
 
 .selected-log {
@@ -215,14 +228,14 @@ input:hover::placeholder {
     overflow: hidden;
 }
 
-#log-content {
-    max-height: 400px;
+#log-content, #log-file-links {
+    max-height: 90%;
     overflow-y: scroll;
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
 
-#log-content::-webkit-scrollbar {
+#log-content::-webkit-scrollbar, #log-file-links::-webkit-scrollbar {
     display: none;
 }
 
@@ -274,5 +287,9 @@ input:hover::placeholder {
     .logs {
         height: 100%;
         flex-direction: column;
+    }
+
+    #log-file-links {
+        max-height: 15vh;
     }
 }

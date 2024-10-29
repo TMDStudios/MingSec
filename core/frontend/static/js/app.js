@@ -23,6 +23,37 @@ function setTheme(theme) {
 // Only use for home page
 if(window.location.pathname === '/'){
     document.getElementById('themes').innerHTML+='<p><a href="/logout">Exit</a></p>';
+
+    document.addEventListener('DOMContentLoaded', function(){
+        const form = document.getElementById('camRequestForm');
+
+        form.addEventListener('submit', function(event){
+            event.preventDefault();
+            const formData = new FormData(form);
+            fetch(form.action,{
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => {
+                if(response.ok){
+                    form.reset();
+                    return response.json();
+                }else{
+                    throw new Error('Unable to send request. The length value must be between 1 and 60.');
+                }
+            })
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        });
+    });
+
     document.querySelectorAll('.log-link').forEach(link => {
         link.addEventListener('click', function(event) {
             event.preventDefault();

@@ -97,7 +97,9 @@ def submitCamRequest(request):
             
             camRequest = CamRequest(type=cam_type, camera=camera, ip=ip, length=length)
             camRequest.save()
-            return redirect("frontend:home")
+            return JsonResponse({'message': 'Camera request submitted successfully!'})
+        else:
+            return JsonResponse({'message': 'Failed to submit request.'}, status=400)
 
 def get_client_ip(request):
     """Retrieve the client's IP address."""

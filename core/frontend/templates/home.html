@@ -8,7 +8,7 @@
             <div class="cam-request">
                 <h3>Camera Request</h3>
                 <hr>
-                <form method="POST" action="/request/">
+                <form id="camRequestForm" method="POST" action="/request/">
                     {% csrf_token %}
                     <div>
                         <label for="id_cam_type">Request Type:</label>
@@ -30,7 +30,10 @@
 
             <div class="logs">
                 <div class="log-list">
-                    <h3>Log Files</h3>
+                    <div class="logs-header">
+                        <h3>Log Files</h3>
+                        <button onclick="fetchLogs()">Refresh</button>
+                    </div>
                     <hr>
                     <div id="log-file-links">
                         {% for f in log_files %}
