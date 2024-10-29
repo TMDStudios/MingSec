@@ -6,10 +6,23 @@ document.addEventListener('DOMContentLoaded', () => {
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
+
+    // Workaround for input stying issue
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        const parent = input.parentNode;
+        const nextSibling = input.nextSibling;
+
+        parent.removeChild(input);
+
+        const newInput = input.cloneNode(true);
+        parent.insertBefore(newInput, nextSibling);
+    });
 }
 
 // Only use for home page
 if(window.location.pathname === '/'){
+    document.getElementById('themes').innerHTML+='<p><a href="/logout">Exit</a></p>';
     document.querySelectorAll('.log-link').forEach(link => {
         link.addEventListener('click', function(event) {
             event.preventDefault();

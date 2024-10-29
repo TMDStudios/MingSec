@@ -6,36 +6,29 @@
     --placeholder-color: rgba(144, 238, 144, 0.5);
     --hover-bg-color: rgba(144, 238, 144, 0.75);
     --hover-text-color: rgb(5, 20, 5);
-}
-
-/* Blue theme */
-[data-theme="blue"] {
-    --bg-color: rgb(0, 0, 50);
-    --text-color: #c4f0fc;
-    --border-color: rgba(70, 130, 180, 0.75);
-    --placeholder-color: rgba(70, 130, 180, 0.5);
-    --hover-bg-color: rgba(98, 156, 203, 0.75);
-    --hover-text-color: rgb(5, 20, 50);
+    --shade-color: lightgreen;
 }
 
 /* Light theme */
 [data-theme="light"] {
-    --bg-color: white;
-    --text-color: black;
+    --bg-color: whitesmoke;
+    --text-color: rgb(33, 33, 33);
     --border-color: rgba(128, 128, 128, 0.75);
     --placeholder-color: rgba(128, 128, 128, 0.5);
-    --hover-bg-color: rgba(220, 220, 220, 0.75);
-    --hover-text-color: black;
+    --hover-bg-color: rgb(33, 33, 33);
+    --hover-text-color: whitesmoke;
+    --shade-color: rgba(255, 255, 255, 0);
 }
 
 /* Dark theme */
 [data-theme="dark"] {
-    --bg-color: black;
-    --text-color: white;
-    --border-color: rgba(50, 50, 50, 0.75);
+    --bg-color: rgb(33, 33, 33);
+    --text-color: whitesmoke;
+    --border-color: rgba(245, 245, 245, 0.66);
     --placeholder-color: rgba(100, 100, 100, 0.5);
-    --hover-bg-color: rgba(100, 100, 100, 0.75);
-    --hover-text-color: white;
+    --hover-bg-color: whitesmoke;
+    --hover-text-color: rgb(33, 33, 33);
+    --shade-color: rgba(255, 255, 255, 0);
 }
 
 * {
@@ -70,7 +63,6 @@ h2 {
     height: 100%;
     display: flex;
     flex-direction: column;
-    margin-top: 1rem;
 }
 
 .logo {
@@ -79,12 +71,26 @@ h2 {
     display: flex;
     justify-content: center;
     overflow: hidden;
+    margin-top: 1rem;
+    position: relative;
 }
 
 .logo img {
     flex: 1 1;
     max-width: none;
     height: auto;
+    filter: grayscale(1);
+}
+
+.logo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--shade-color);
+    mix-blend-mode: multiply;
 }
 
 .themes {
@@ -99,12 +105,25 @@ button {
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
     width: 10ch;
-    min-width: 7ch;
 }
 
 button:hover {
     background-color: var(--hover-bg-color);
     color: var(--hover-text-color);
+}
+
+.themes a {
+    text-decoration: none;
+    background-color: var(--hover-bg-color);
+    color: var(--hover-text-color);
+    padding-left: 1ch;
+    padding-right: 1ch;
+}
+
+.themes a:hover {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    text-decoration: underline;
 }
 
 hr {
