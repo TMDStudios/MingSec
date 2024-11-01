@@ -9,5 +9,6 @@ urlpatterns = [
     path('login/', views.login, name='login'),
     path('request/', views.submitCamRequest, name='submitCamRequest'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('fetch-log-files/', views.fetch_log_files, name='fetch_log_files'),
     path('fetch-log/', views.fetch_log, name='fetch_log'),
 ]
