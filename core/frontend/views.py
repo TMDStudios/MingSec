@@ -82,7 +82,7 @@ def submitCamRequest(request):
             camRequest.save()
             return JsonResponse({'message': 'Camera request submitted successfully!'})
         else:
-            return JsonResponse({'message': 'Failed to submit request.'}, status=400)
+            return JsonResponse({'message': 'Failed to submit request. Invalid form.'}, status=400)
 
 def get_client_ip(request):
     """Retrieve the client's IP address."""

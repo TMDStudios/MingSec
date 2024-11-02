@@ -25,37 +25,48 @@ function setTheme(theme) {
 function handleHomePage(){
     document.getElementById('themes').innerHTML += '<p><a href="/logout">Exit</a></p>';
 
-    document.addEventListener('DOMContentLoaded', function(){
-        const form = document.getElementById('camRequestForm');
+    const form = document.getElementById('camRequestForm');
 
-        form.addEventListener('submit', function(event){
-            event.preventDefault();
-            const formData = new FormData(form);
-            fetch(form.action,{
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                }
-            })
-            .then(response => {
-                if(response.ok){
-                    form.reset();
-                    return response.json();
-                }else{
-                    throw new Error('Unable to send request. The length value must be between 1 and 60.');
-                }
-            })
-            .then(data => {
-                alert(data.message);
-            })
-            .catch(error => {
-                alert('Error: ' + error.message);
-            });
+    form.addEventListener('submit', function(event){
+        event.preventDefault();
+        const formData = new FormData(form);
+        fetch(form.action,{
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => {
+            if(response.ok){
+                form.reset();
+                return response.json();
+            }else{
+                throw new Error('Unable to send request. The length value must be between 1 and 60.');
+            }
+        })
+        .then(data => {
+            showModal(data.message);
+        })
+        .catch(error => {
+            showModal('Error: ' + error.message);
         });
     });
 
     fetchLogFiles();
+}
+
+function showModal(msg){
+    document.getElementById("modal_content").innerHTML = `
+        <p>${msg}</p>
+        <div><button id="modal_button">Dismiss</button></div>
+    `;
+
+    document.getElementById("modal_button").addEventListener('click', () => {
+        document.getElementById("modal").close();
+    });
+
+    document.getElementById("modal").showModal();
 }
 
 function fetchLogFiles(){

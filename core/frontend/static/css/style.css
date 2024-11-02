@@ -265,6 +265,31 @@ input:hover::placeholder {
     cursor: pointer;
 }
 
+/* MODAL */
+.modal {
+    border: 1px solid var(--border-color);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: var(--bg-color);
+    color: var(--text-color);
+    padding: 1rem;
+    text-align: center;
+    min-height: fit-content;
+}
+
+.modal p, .modal button {
+    margin: 1rem;
+    font-size: large;
+}
+
+.modal::backdrop {
+    background-color: var(--placeholder-color);
+    opacity: 0.4;
+}
+
 @media only screen and (max-width: 640px){
     body {
         min-width: 100vw;
