@@ -148,5 +148,5 @@ SESSION_COOKIE_AGE = 1800  # 30 minutes
 # This ensures that the session will expire if the user is inactive for more than SESSION_COOKIE_AGE
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# Optionally, you can set this to True to invalidate old sessions on login
+# Set this to True to invalidate old sessions on login
 SESSION_SAVE_EVERY_REQUEST = True

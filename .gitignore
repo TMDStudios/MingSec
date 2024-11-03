@@ -1,10 +1,19 @@
+# Virtual Environments
 /local/venv
 /core/venv
+venv/
+
+# Media files
 *.avi
 *.jpg
 *.sqlite3
 *.db
+
+# Environment files
 .env
+
+# Logs
+*.log
 /local/*log*.txt
 todo.txt
 
@@ -13,7 +22,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.pyc
 
 # Compiled files
 *.pyc
@@ -22,12 +30,10 @@ __pycache__/
 
 # Static files collected by Django
 staticfiles/
+static/
 
-# Django migrations (should be committed to version control)
+# Django migrations
 !*/migrations/__init__.py
-
-# Log files
-*.log
 
 # Coverage reports
 .coverage
@@ -58,3 +64,24 @@ Desktop.ini
 *.gz
 *.tar
 *.zip
+
+# Gradle files
+.gradle/
+build/
+app/build/
+*.kotlin_metadata
+
+# Local configuration
+local.properties
+
+# Miscellaneous binaries and archives
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.tgz
+*.7z
+*.class
+
+# Google Services configuration
+google-services.json

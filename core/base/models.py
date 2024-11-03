@@ -1,8 +1,6 @@
 from django.db import models
 from time import time, localtime, strftime
 
-# Create your models here.
-
 class CamRequest(models.Model):
     type = models.CharField(max_length=64, null=False)
     camera = models.CharField(max_length=64, null=False)
