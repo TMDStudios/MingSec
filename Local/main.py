@@ -11,16 +11,24 @@ from time import time, strftime, localtime
 import pathlib
 from dropbox_handler import DropboxHandler
 
+# Firebase
+from firebase_handler import generate_firebase_jwt, send_notification
+
 from dotenv.main import load_dotenv
 import os
 
 import requests
 import json
 import logging
+import datetime
 
 class CameraSystem:
     # Load configuration from JSON file
-    with open('config.json') as config_file:
+    config_path = 'config.json'
+    if not os.path.exists(config_path):
+        print(f"Config file not found: {config_path}")
+        raise FileNotFoundError(f"Config file {config_path} is missing.")
+    with open(config_path) as config_file:
         config = json.load(config_file)
 
     # Video settings
@@ -89,6 +97,35 @@ class CameraSystem:
         self.EXTERNAL_DEVICE_NAME = os.environ['EXTERNAL_DEVICE_NAME']
         self.EXTERNAL_DEVICE_PATH = os.environ['EXTERNAL_DEVICE_PATH']
 
+        self.NOTIFICATION_DEVICE_TOKEN = os.environ['NOTIFICATION_DEVICE_TOKEN']
+        self.FIREBASE_PROJECT_ID = os.environ['FIREBASE_PROJECT_ID']
+        self.FIREBASE_JWT = generate_firebase_jwt()
+        self.FIREBASE_JWT_IS_VALID = False
+
+        # Logging
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+
+        file_handler = logging.FileHandler(self.LOG_FILE)
+        console_handler = logging.StreamHandler()
+
+        file_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.INFO)
+
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(console_handler)
+
+        if self.FIREBASE_JWT.startswith("Error -"):
+            self.logger.error(f"Unable to retrieve Firebase JWT: {self.FIREBASE_JWT}")
+            self.FIREBASE_JWT = None
+        else:
+            self.FIREBASE_JWT_IS_VALID = True
+            self.logger.info("Firebase JWT successfully generated.")
+
         self.headers = {'Authorization': 'Bearer '+self.MINGSEC_API_KEY}
 
         self.cap = cv2.VideoCapture(self.CAMERA_INDEX, cv2.CAP_DSHOW)
@@ -112,23 +149,6 @@ class CameraSystem:
         self.img_file_name = ''
         self.upload_recording = False
         self.last_image_time = int(time()*self.TIME_CONVERSION_MULTIPLIER)
-
-        # Logging
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
-
-        file_handler = logging.FileHandler(self.LOG_FILE)
-        console_handler = logging.StreamHandler()
-
-        file_handler.setLevel(logging.INFO)
-        console_handler.setLevel(logging.INFO)
-
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(formatter)
-        console_handler.setFormatter(formatter)
-
-        self.logger.addHandler(file_handler)
-        self.logger.addHandler(console_handler)
 
         self.unsent_log = False
 
@@ -245,6 +265,14 @@ class CameraSystem:
         self.alarm = False
 
     def report_alarm(self):
+        if self.FIREBASE_JWT_IS_VALID:
+            alarm_notification = send_notification(
+                self.FIREBASE_JWT, 
+                self.FIREBASE_PROJECT_ID, 
+                self.NOTIFICATION_DEVICE_TOKEN, 
+                'ALARM', 
+                f'Main alarm has been tripped {datetime.datetime.now}')
+            self.logger.error(alarm_notification) if alarm_notification.startswith("Error -") else self.logger.info(alarm_notification)
         try:
             r = requests.post(self.ALARM_REPORT_ENDPOINT, headers=self.headers, json={'camera':'PC'})
             self.logger.info(f"ALARM REPORT SENT {r.text}")
