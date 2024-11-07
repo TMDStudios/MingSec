@@ -45,6 +45,7 @@ class CameraSystem:
     # Intervals
     REQUEST_CHECK_INTERVAL = config['intervals']['request_check_interval']
     IMAGE_SAVE_INTERVAL = config['intervals']['image_save_interval']
+    FIREBASE_JWT_INTERVAL = config['intervals']['firebase_jwt_interval']
 
     # Alarm settings
     ALARM_BEEP_COUNT = config['alarm_settings']['alarm_beep_count']
@@ -101,6 +102,7 @@ class CameraSystem:
         self.FIREBASE_PROJECT_ID = os.environ['FIREBASE_PROJECT_ID']
         self.FIREBASE_JWT = generate_firebase_jwt()
         self.FIREBASE_JWT_IS_VALID = False
+        self.last_firebase_jwt = time()
 
         # Logging
         self.logger = logging.getLogger(__name__)
@@ -119,12 +121,7 @@ class CameraSystem:
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
 
-        if self.FIREBASE_JWT.startswith("Error -"):
-            self.logger.error(f"Unable to retrieve Firebase JWT: {self.FIREBASE_JWT}")
-            self.FIREBASE_JWT = None
-        else:
-            self.FIREBASE_JWT_IS_VALID = True
-            self.logger.info("Firebase JWT successfully generated.")
+        self.get_firebase_jwt()
 
         self.headers = {'Authorization': 'Bearer '+self.MINGSEC_API_KEY}
 
@@ -257,6 +254,18 @@ class CameraSystem:
             self.dropbox_handler.dbx = self.dropbox_handler.connect()
             self.dropbox_log_handler.dbx = self.dropbox_log_handler.connect()
 
+    def check_firebase_jwt(self):
+        if time() - self.last_firebase_jwt > self.FIREBASE_JWT_INTERVAL:
+            self.get_firebase_jwt()
+
+    def get_firebase_jwt(self):
+        if self.FIREBASE_JWT.startswith("Error -"):
+            self.logger.error(f"Unable to retrieve Firebase JWT: {self.FIREBASE_JWT}")
+            self.FIREBASE_JWT = None
+        else:
+            self.FIREBASE_JWT_IS_VALID = True
+            self.logger.info("Firebase JWT successfully generated.")
+
     def beep_alarm(self):
         for i in range(self.ALARM_BEEP_COUNT):
             if not self.alarm_mode:
@@ -271,7 +280,7 @@ class CameraSystem:
                 self.FIREBASE_PROJECT_ID, 
                 self.NOTIFICATION_DEVICE_TOKEN, 
                 'ALARM', 
-                f'Main alarm has been tripped {datetime.datetime.now}')
+                f'Main alarm has been tripped {(datetime.datetime.now())}')
             self.logger.error(alarm_notification) if alarm_notification.startswith("Error -") else self.logger.info(alarm_notification)
         try:
             r = requests.post(self.ALARM_REPORT_ENDPOINT, headers=self.headers, json={'camera':'PC'})
@@ -561,6 +570,7 @@ class CameraSystem:
 
             self.display_frame(frame)
             self.check_for_requests()
+            self.check_firebase_jwt()
             self.save_and_upload_image(frame)
             self.handle_video_recording(frame)
             self.alarm_check(frame)

@@ -12,7 +12,8 @@
     },
     "intervals": {
       "request_check_interval": 10000,
-      "image_save_interval": 600000
+      "image_save_interval": 600000,
+      "firebase_jwt_interval": 3300000
     },
     "alarm_settings": {
       "alarm_beep_count": 5,

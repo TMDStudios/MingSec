@@ -283,6 +283,7 @@ input:hover::placeholder {
 .modal p, .modal button {
     margin: 1rem;
     font-size: large;
+    min-width: 11ch;
 }
 
 .modal::backdrop {
@@ -316,5 +317,9 @@ input:hover::placeholder {
 
     #log-file-links {
         max-height: 15vh;
+    }
+
+    .modal {
+        width: 90vw;
     }
 }
