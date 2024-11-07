@@ -30,8 +30,7 @@ __pycache__/
 *.pyd
 
 # Static files collected by Django
-staticfiles/
-static/
+
 
 # Django migrations
 !*/migrations/__init__.py
