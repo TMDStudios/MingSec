@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.google.gms.google-services") // Ensure you have the Google services plugin
+    id("com.google.gms.google-services")
     id("org.jetbrains.kotlin.android")
 }
 
@@ -41,8 +41,7 @@ android {
         compose = true
     }
     composeOptions {
-        // Match this to the Compose version you're using
-        kotlinCompilerExtensionVersion = "1.4.3" // Update if necessary based on the Compose BOM
+        kotlinCompilerExtensionVersion = "1.4.3"
     }
     packaging {
         resources {
@@ -65,7 +64,21 @@ dependencies {
 
     // Use the Firebase BOM for version management
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
-    implementation("com.google.firebase:firebase-messaging-ktx") // Removed version to use BOM
+    implementation("com.google.firebase:firebase-messaging-ktx")
+
+    // Retrofit for network requests
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // OkHttp for HTTP requests
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+
+    // Coroutines for background tasks
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
+
+    // Jetpack Compose dependencies
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

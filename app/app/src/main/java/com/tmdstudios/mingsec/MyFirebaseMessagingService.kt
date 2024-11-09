@@ -2,9 +2,9 @@ package com.tmdstudios.mingsec
 
 import android.app.NotificationManager
 import android.content.Context
+import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import androidx.core.app.NotificationCompat
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -18,7 +18,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val notificationId = 1
 
         val builder = NotificationCompat.Builder(this, "default_channel")
-            .setSmallIcon(R.mipmap.ic_launcher) // Ensure you have a drawable icon
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -28,6 +28,5 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // Send the token to your server for later use
     }
 }

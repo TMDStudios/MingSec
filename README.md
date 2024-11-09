@@ -9,12 +9,14 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 - **Alarm Response**: Captures an image and records a video if the alarm is triggered. Both are uploaded to Dropbox.
 - **Offline Operation**: Logs all videos and images when the internet connection is down, and uploads them once the connection is restored.
 - **REST API**: Provides endpoints for users to check the status of each camera and request images or videos.
+- **Kotlin Notification App**: A companion mobile app developed in Kotlin that receives notifications each time an alarm is triggered.
 
 ## Project Structure:
 
 - **docs/** - Contains a Single Page Application (SPA) for the project demo. (Coming soon)
 - **core/** - Includes the REST API and user interface for remote control and system management.
 - **local/** - Contains the MingSec application, including configuration files and local scripts.
+- **app/** - Contains the Kotlin notification app that receives alerts for triggered alarms.
 
 ## License
 
@@ -24,6 +26,7 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 
 - OpenCV for motion detection capabilities.
 - Dropbox for storage solutions.
+- Firebase for alarm notifications.
 
 ## You May Also Like...
 
