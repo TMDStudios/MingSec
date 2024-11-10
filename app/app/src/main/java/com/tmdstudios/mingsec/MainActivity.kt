@@ -14,11 +14,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tmdstudios.mingsec.ui.theme.MingSecTheme
@@ -30,7 +28,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MingSecTheme {
-                // Main Screen UI
                 MainScreen()
             }
         }
@@ -39,56 +36,65 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen() {
-    // State to hold the list of alarm reports
-    var alarmReports by remember { mutableStateOf<List<AlarmReport>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val alarmReports = remember { mutableStateOf<List<AlarmReport>>(emptyList()) }
+    val isLoading = remember { mutableStateOf(true) }
+    val errorMessage = remember { mutableStateOf<String?>(null) }
 
-    // The API key to be used for authorization
-    val apiKey = "API_KEY"  // Replace with your actual API key
-
-    // Launch a coroutine for network request
+    // Coroutine scope to manage background tasks like network requests
     val scope = rememberCoroutineScope()
 
-    // Fetch data from API using LaunchedEffect
+    // LaunchedEffect to run network request when the composable is first launched
     LaunchedEffect(Unit) {
         scope.launch {
             try {
-                // Call the suspend function to fetch alarm reports from the API
-                val response: Response<List<AlarmReport>> = RetrofitClient.apiService.getAlarms("Bearer $apiKey")
+                Log.d("MainScreen", "Making network request to fetch alarms")
 
-                // Check if the response is successful
+                // Fetch alarm reports from the API
+                val response: Response<List<AlarmReport>> = RetrofitClient.apiService.getAlarms()
+
                 if (response.isSuccessful) {
-                    alarmReports = response.body() ?: emptyList()
-                    isLoading = false
+                    val body = response.body()
+                    if (body != null) {
+                        alarmReports.value = body // Set the data to alarmReports
+                        Log.d("MainScreen", "Alarms fetched successfully: ${body.size} reports")
+                    } else {
+                        errorMessage.value = "No data available"
+                        Log.e("MainScreen", "Response body was null")
+                    }
                 } else {
-                    errorMessage = "Error: ${response.message()}"
-                    isLoading = false
+                    errorMessage.value = "Error: ${response.message()}"
+                    Log.e("MainScreen", "Error fetching alarms: ${response.message()}")
                 }
             } catch (e: Exception) {
-                // Log the exception to identify the issue
-                errorMessage = "Exception: ${e.localizedMessage}"
-                isLoading = false
+                // Handle network or other exceptions
+                errorMessage.value = "Exception: ${e.localizedMessage}"
+                Log.e("MainScreen", "Exception occurred: ${e.localizedMessage}", e)
+            } finally {
+                // Set loading state to false after the network call completes
+                isLoading.value = false
+                Log.d("MainScreen", "Network call completed, isLoading = false")
             }
         }
     }
 
-    // Surface to display the UI
+    // Main UI container
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.padding(16.dp)) {
             Header()
 
-            // Display loading or error message
-            if (isLoading) {
+            // Conditional UI rendering based on loading, error, or data state
+            if (isLoading.value) {
                 Text(text = "Loading alarm reports...", modifier = Modifier.padding(16.dp))
-            } else if (errorMessage != null) {
-                // Show the error message
-                Text(text = "Error: $errorMessage", modifier = Modifier.padding(16.dp))
+            } else if (errorMessage.value != null) {
+                Text(text = "Error: ${errorMessage.value}", modifier = Modifier.padding(16.dp))
             } else {
-                // Display the alarm reports list
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(alarmReports) { report ->
-                        AlarmCard(alarmReport = report)
+                if (alarmReports.value.isEmpty()) {
+                    Text(text = "No alarm reports available.", modifier = Modifier.padding(16.dp))
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(alarmReports.value) { report ->
+                            AlarmCard(alarmReport = report) // Display each alarm report
+                        }
                     }
                 }
             }
@@ -98,17 +104,6 @@ fun MainScreen() {
 
 @Composable
 fun Header() {
-    var token by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(Unit) {
-        // Retrieve the FCM token
-        FCMTokenManager.getFCMToken { retrievedToken ->
-            token = retrievedToken // Update the state with the retrieved token
-        }
-    }
-
-    token?.let { Log.d("FCM_TOKEN", it) }
-
     Text(
         text = "Reported Alarms",
         style = MaterialTheme.typography.headlineMedium,
@@ -118,6 +113,7 @@ fun Header() {
 
 @Composable
 fun AlarmCard(alarmReport: AlarmReport) {
+    // Display individual alarm details in a card-like format
     Column(modifier = Modifier.padding(8.dp)) {
         Text(text = "Camera: ${alarmReport.camera}", style = MaterialTheme.typography.bodyMedium)
         Text(text = "Time: ${alarmReport.time}", style = MaterialTheme.typography.bodyLarge)

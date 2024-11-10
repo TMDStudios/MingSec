@@ -12,6 +12,7 @@ venv/
 # Environment files
 .env
 /local/ming_sec_firebase.json
+env
 
 # Logs
 *.log
