@@ -10,21 +10,28 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Color(144,238,144),
+    secondary = Color(144,238,144),
+    background = Color(5,10,5),
+    surface = Color(5,10,5),
+    onPrimary = Color(144,238,144),
+    onSecondary = Color(144,238,144),
+    onBackground = Color(144,238,144),
+    onSurface = Color(144,238,144),
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = Color(33,33,33),
+    secondary = Color(33,33,33),
+    tertiary = Color(33,33,33),
+    background = Color(245,245,245)
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -41,7 +48,7 @@ private val LightColorScheme = lightColorScheme(
 fun MingSecTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

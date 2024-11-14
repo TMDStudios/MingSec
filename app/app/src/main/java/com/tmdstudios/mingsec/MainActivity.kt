@@ -4,11 +4,18 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tmdstudios.mingsec.ui.theme.MingSecTheme
@@ -26,8 +34,9 @@ import retrofit2.Response
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            MingSecTheme {
+            MingSecTheme(darkTheme = true) {
                 MainScreen()
             }
         }
@@ -39,6 +48,8 @@ fun MainScreen() {
     val alarmReports = remember { mutableStateOf<List<AlarmReport>>(emptyList()) }
     val isLoading = remember { mutableStateOf(true) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
+    val showPopup = remember { mutableStateOf(false) }
+    val fcmToken = remember { mutableStateOf<String?>(null) }
 
     // Coroutine scope to manage background tasks like network requests
     val scope = rememberCoroutineScope()
@@ -80,6 +91,31 @@ fun MainScreen() {
     // Main UI container
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.padding(16.dp)) {
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Button(
+                    onClick = {
+                                FCMTokenManager.getFCMToken { token ->
+                                    fcmToken.value = token
+                                }
+                                showPopup.value = true
+                              },
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(top = 16.dp, bottom = 16.dp)
+                        .border(
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                            shape = MaterialTheme.shapes.medium
+                        ),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onBackground
+                    )
+                ) {
+                    Text(text = "Notification Device Token")
+                }
+            }
             Header()
 
             // Conditional UI rendering based on loading, error, or data state
@@ -98,17 +134,46 @@ fun MainScreen() {
                     }
                 }
             }
+
+            if (showPopup.value) {
+                AlertDialog(
+                    onDismissRequest = { showPopup.value = false }, // Close the dialog when clicked outside
+                    title = { Text(text = "Notification Device Token") },
+                    text = { Text(text = "${fcmToken.value}") },
+                    confirmButton = {
+                        Button(
+                            onClick = { showPopup.value = false },
+                            modifier = Modifier
+                                .border(
+                                    BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                                    shape = MaterialTheme.shapes.medium
+                                ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.background,
+                                contentColor = MaterialTheme.colorScheme.onBackground
+                            )) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
         }
     }
 }
 
 @Composable
 fun Header() {
-    Text(
-        text = "Reported Alarms",
-        style = MaterialTheme.typography.headlineMedium,
-        modifier = Modifier.padding(16.dp)
-    )
+    Box(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Reported Alarms",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(top = 16.dp, bottom = 16.dp)
+        )
+    }
 }
 
 @Composable
