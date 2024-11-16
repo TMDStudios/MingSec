@@ -18,6 +18,13 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 - **local/** - Contains the MingSec application, including configuration files and local scripts.
 - **app/** - Contains the Kotlin notification app that receives alerts for triggered alarms.
 
+## Installation Guides
+
+- [Local System Setup](local/README.md): Steps to configure and run the local MingSec application.
+- [Core Setup](core/README.md): Instructions for setting up the REST API and user interface. (Coming soon)
+- [Kotlin App Setup](app/README.md): Guide for building and deploying the Kotlin notification app. (Coming soon)
+- [Docs Setup](docs/README.md): Instructions for the Single Page Application (SPA) demo. (Coming soon)
+
 ## License
 
 - This project is licensed under the GPL-3.0 License. See [LICENSE](https://github.com/TMDStudios/MingSec/blob/main/LICENSE) for details.
