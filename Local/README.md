@@ -8,6 +8,7 @@ This guide walks you through setting up the local MingSec system.
 
 - Python 3.8 or higher
 - A [Dropbox account](https://www.dropbox.com/) (if you don’t already have one)
+- (Recommended) [GitBash](https://git-scm.com/downloads) (Some bash commands will look different if you are not using GitBash)
 - (Optional) A Linux device for a second camera
 - (Optional) Firebase account for notifications (if using the Kotlin notification app)
 
@@ -42,35 +43,13 @@ pip install -r requirements.txt
    - If you decide to use one application, use the same credentials for both apps in the .env file
 
 ### 4. Configure Environment Variables
-Create a `.env` file in the `local` folder with the following key-value pairs:
+Generate a `.env` file in the `local` folder with the following command:
 
-```plaintext
-# Dropbox App Credentials
-DROPBOX_APP_KEY = YOUR_APP_KEY
-DROPBOX_APP_SECRET = YOUR_APP_SECRET
-DROPBOX_REFRESH_TOKEN = YOUR_REFRESH_TOKEN
-
-# Optional Second Dropbox App with Read/Write permissions (used for logs). If using one app, just paste the same credentials below.
-DROPBOX_APP_KEY_RW = YOUR_APP_KEY
-DROPBOX_APP_SECRET_RW = YOUR_APP_SECRET
-DROPBOX_REFRESH_TOKEN_RW = YOUR_REFRESH_TOKEN
-
-# MingSec API Credentials - Deployment help can be found in the 'frontend' README
-MINGSEC_API_KEY = YOUR_DJANGO_API_KEY
-
-# API Endpoints
-CAM_REQUEST_ENDPOINT = YOUR_DEPLOYED_DJANGO_URL/api/requests/get/
-ALARM_REPORT_ENDPOINT = YOUR_DEPLOYED_DJANGO_URL/api/alarms/add/
-STATUS_REPORT_ENDPOINT = YOUR_DEPLOYED_DJANGO_URL/api/status/add/
-
-# External Linux Device (Optional - if planning to use a second camera)
-EXTERNAL_DEVICE_NAME = YOUR_EXTERNAL_DEVICE_NAME
-EXTERNAL_DEVICE_PATH = ~/Desktop/external
-
-# Firebase Credentials - Firebase app help can be found in the 'app' README
-FIREBASE_PROJECT_ID = YOUR_FIREBASE_PROJECT_ID
-NOTIFICATION_DEVICE_TOKEN = YOUR_NOTIFICATION_DEVICE_TOKEN
+```bash
+winpty python dot_env_generator.py
 ```
+
+Then, open the `.env` file and replace the placeholder values with your own credentials, including the Dropbox `APP_KEY`, `APP_SECRET`, and `REFRESH_TOKEN`.
 
 ---
 
@@ -83,3 +62,12 @@ If you're not using a second camera, you can skip this step.
 2. Generate the `google-services.json` file for your project.
 3. Rename this file to `ming_sec_firebase.json` and save it in the `Local` folder (the same folder as `main.py`).
 > You can get the `NOTIFICATION_DEVICE_TOKEN` from the Kotlin app after setting up Firebase notifications.
+
+---
+
+### Start MingSec
+Run the following command to start MingSec:
+
+```bash
+winpty python main.py
+```
