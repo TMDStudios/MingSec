@@ -43,7 +43,15 @@ Open the .env file and replace the placeholder values with your own credentials 
 - DROPBOX_APP_SECRET_RW - Your Dropbox app secret
 - DROPBOX_REFRESH_TOKEN_RW - Your Dropbox refresh token
 
-### 4. Create Django Super User
+### 4. Database Setup
+Run the following commands to set up the database:
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### 5. Create Django Super User
 Run the following command:
 
 ```bash
@@ -53,10 +61,12 @@ python manage.py createsuperuser
 Django will prompt you to enter the following information for the superuser:
 
 Username: The username you'll use to log in to the Django admin interface (e.g., admin).
+
 Email address: The email associated with the superuser account.
+
 Password: The password for the superuser account (you'll need to confirm the password by entering it twice).
 
-### 5. Run the Django Development Server
+### 6. Run the Django Development Server
 Once your environment is set up and all credentials are configured:
 
 ```bash
@@ -65,7 +75,7 @@ python manage.py runserver
 
 This will start the Django development server. You can now visit http://127.0.0.1:8000 in your browser to see the app in action.
 
-### 6. Deploy to [pythonanywhere](https://www.pythonanywhere.com/)
+### 7. Deploy to [pythonanywhere](https://www.pythonanywhere.com/)
 To deploy your project to PythonAnywhere, follow these steps:
 
 Create an account or log in to [pythonanywhere](https://www.pythonanywhere.com/).
@@ -73,7 +83,7 @@ Follow their detailed instructions on how to deploy an existing Django project: 
 
 > Feel free to deploy to any platform that suits your needs, but I personally prefer [pythonanywhere](https://www.pythonanywhere.com/) due to its ease of use.
 
-### 7. Update `.env` file in the `local` folder
+### 8. Update `.env` file in the `local` folder
 
 Now, go back to the `.env` file in the `local` folder and replace `http://localhost:8000` with your pythonanywhere URL (i.e. `https://mypage.pythonanywhere.com`):
 

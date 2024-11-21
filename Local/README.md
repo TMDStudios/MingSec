@@ -59,9 +59,19 @@ If you're not using a second camera, you can skip this step.
 
 ### 6. (Optional) Setup Firebase for Kotlin Notifications
 1. Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/).
-2. Generate the `google-services.json` file for your project.
+- Fore help with setting up a Firebase project, click [here](https://firebase.google.com/docs/android/setup)
+2. Generate the `service-account-file.json` file for your project:
+- Go to the Firebase Console: Open your web browser and navigate to the Firebase Console.
+- Select your project: From the project list, select the project for which you need the service account file.
+- Open Project Settings: Click on the gear icon next to "Project Overview" in the top left corner and select "Project settings" from the dropdown menu.
+- Navigate to Service Accounts: In the Project settings, click on the "Service accounts" tab.
+- Generate a new private key:
+  - Click the "Generate new private key" button.
+  - A confirmation dialog will appear. Click "Generate Key".
+- Download the JSON file: The JSON file containing your service account credentials will be downloaded to your computer.
 3. Rename this file to `ming_sec_firebase.json` and save it in the `Local` folder (the same folder as `main.py`).
-> You can get the `NOTIFICATION_DEVICE_TOKEN` from the Kotlin app after setting up Firebase notifications.
+4. Open the `.env` file and update the `FIREBASE_PROJECT_ID` (You can find your project id in the `ming_sec_firebase.json` file)
+> You can get the `NOTIFICATION_DEVICE_TOKEN` from the Kotlin app later.
 
 ---
 

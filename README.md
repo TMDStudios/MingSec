@@ -22,7 +22,7 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 
 - [Local System Setup](Local/README.md): Steps to configure and run the local MingSec application.
 - [Core Setup](core/README.md): Instructions for setting up the REST API and user interface.
-- [Kotlin App Setup](app/README.md): Guide for building and deploying the Kotlin notification app. (Coming soon)
+- [Kotlin App Setup](app/README.md): Guide for building and deploying the Kotlin notification app.
 - [Docs Setup](docs/README.md): Instructions for the Single Page Application (SPA) demo. (Coming soon)
 
 ## License
