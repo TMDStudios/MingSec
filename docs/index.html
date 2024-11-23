@@ -2,12 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Ming Sec</title>
+    <meta name="robots" content="index,follow" />
+    <meta property="og:image" content="https://tmdstudios.files.wordpress.com/2023/01/logo-copy.png" />
+    <meta property="og:title" content="MingSec">
+    <meta name="description" property="og:description" content="MingSec is an open-source home security system.">
+    <meta name="twitter:card" value="summary">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="shortcut icon" href="media/favicon.ico?" type="image/x-icon" />
+    <title>MingSec Demo</title>
 </head>
 <body>
-    <p>This is just a placeholder</p>
+    <div class="logo">
+        <img class="logoExt" src="../core/frontend/static/media/MingSecLogoExtensionBW.png" alt="Ming Sec Logo Left">
+        <img class="logoMain" src="../core/frontend/static/media/MingSecLogoBW.png" alt="Ming Sec Logo">
+        <img class="logoExt" src="../core/frontend/static/media/MingSecLogoExtensionBW.png" alt="Ming Sec Logo Right">
+    </div>
+
+    <div class="intro">
+        <p id="instructions">MingSec requires you to be logged in to interact with the security system.</p>
+    </div>
+
+    <div class="screencap">
+        <p onclick="prevImg()" class="prev">&lt;</p>
+        <img src="media/1.png" alt="MingSec Demo Image">
+        <p onclick="nextImg()" class="next">&gt;</p>
+    </div>
     <script type="text/javascript" src="app.js"></script>
 </body>
 </html>

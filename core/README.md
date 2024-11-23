@@ -60,11 +60,9 @@ python manage.py createsuperuser
 
 Django will prompt you to enter the following information for the superuser:
 
-Username: The username you'll use to log in to the Django admin interface (e.g., admin).
-
-Email address: The email associated with the superuser account.
-
-Password: The password for the superuser account (you'll need to confirm the password by entering it twice).
+- Username: The username you'll use to log in to the Django admin interface (e.g., admin).
+- Email address: The email associated with the superuser account.
+- Password: The password for the superuser account (you'll need to confirm the password by entering it twice).
 
 ### 6. Run the Django Development Server
 Once your environment is set up and all credentials are configured:

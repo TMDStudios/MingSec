@@ -1,4 +1,122 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: 'Consolas','Trebuchet MS', 'Lucida Sans Unicode', Verdana, sans-serif, Arial;
+}
+
 body {
-    background-color: rgb(33,33,33);
-    color: whitesmoke;
+    background-color: rgb(5, 10, 5);
+    color: lightgreen;
+    min-width: 640px;
+    max-width: 1080px;
+    height: 96vh;
+    margin: auto;
+}
+
+.logo {
+    max-width: 100%;
+    max-height: 113px;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    margin-top: 1rem;
+    position: relative;
+}
+
+.logo img {
+    flex: 1 1;
+    max-width: none;
+    height: auto;
+    filter: grayscale(1);
+}
+
+.logo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: lightgreen;
+    mix-blend-mode: multiply;
+}
+
+hr {
+    margin: 1rem 0;
+    border: none;
+    height: 2px;
+    background-color: rgba(144, 238, 144, 0.75);
+}
+
+.intro {
+    padding: 8px;
+    height: 10vh;
+    color: lightgreen;
+    display: flex;
+    align-items: center;
+}
+
+.screencap {
+    overflow-y: hidden;
+    display: flex;
+    justify-content: space-between;
+    background-color: rgb(5, 10, 5);
+    height: 680px;
+    align-items: center;
+
+    /* Disable Text Selection */
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+}
+
+.screencap img {
+    max-width: 90%;
+}
+
+.prev {
+    color: rgba(144, 238, 144, 0.75);
+    font-size: 40px;
+    background-color: rgb(5, 10, 5);
+    padding: 48px 4px 48px 6px;
+    border-radius: 48px 0px 0px 48px;
+}
+.prev:hover {
+    color: limegreen;
+    background-image: linear-gradient(to left, rgba(144, 238, 144, 0.2), rgba(144, 238, 144, 0.1), rgb(5, 10, 5));
+    cursor: pointer;
+}
+.next {
+    color: rgba(144, 238, 144, 0.75);
+    font-size: 40px;
+    background-color: rgb(5, 10, 5);
+    padding: 48px 4px 48px 6px;
+    border-radius: 0px 48px 48px 0px;
+}
+.next:hover {
+    color: limegreen;
+    background-image: linear-gradient(to right, rgba(144, 238, 144, 0.2), rgba(144, 238, 144, 0.1), rgb(5, 10, 5));
+    cursor: pointer;
+}
+
+@media only screen and (max-width: 640px){
+    body {
+        width: 96vw;
+        max-width: 96vw;
+        height: var(--app-height);
+    }
+    .logo {
+        max-height: 60px;
+    }
+    .intro {
+        margin-bottom: 20px;
+    }
+    .screencap {
+        width: 100%;
+        height: 50%;
+        background-image: linear-gradient(to right, black, black);
+        overflow: hidden;
+        align-items: center;
+    }
 }

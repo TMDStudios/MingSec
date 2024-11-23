@@ -1,6 +1,10 @@
 # MingSec
 
-MingSec is a basic home security system designed to leverage OpenCV for motion detection. It offers features like motion detection, image capture, alarm responses, offline operation, and a REST API for remote management.
+![GitHub Badge](https://img.shields.io/badge/deployment-GitHub-black) ![pythonanywhere Badge](https://img.shields.io/badge/deployment-railway-lightblue)
+
+![MingSec Logo](/core/frontend/static/media/MingSec.png)
+
+MingSec is a basic home security system designed to leverage OpenCV for motion detection. It features motion detection, image/video capture, alarm responses, offline operation, a REST API for remote management, and a Kotlin app for notifications.
 
 ## Features
 
@@ -23,7 +27,6 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 - [Local System Setup](Local/README.md): Steps to configure and run the local MingSec application.
 - [Core Setup](core/README.md): Instructions for setting up the REST API and user interface.
 - [Kotlin App Setup](app/README.md): Guide for building and deploying the Kotlin notification app.
-- [Docs Setup](docs/README.md): Instructions for the Single Page Application (SPA) demo. (Coming soon)
 
 ## License
 

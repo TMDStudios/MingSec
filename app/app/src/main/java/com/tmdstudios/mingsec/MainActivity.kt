@@ -66,7 +66,7 @@ fun MainScreen() {
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body != null) {
-                        alarmReports.value = body // Set the data to alarmReports
+                        alarmReports.value = body.reversed() // Set the data to alarmReports
                         Log.d("MainScreen", "Alarms fetched successfully: ${body.size} reports")
                     } else {
                         errorMessage.value = "No data available"

@@ -59,7 +59,7 @@ If you're not using a second camera, you can skip this step.
 
 ### 6. (Optional) Setup Firebase for Kotlin Notifications
 1. Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/).
-- Fore help with setting up a Firebase project, click [here](https://firebase.google.com/docs/android/setup)
+- For help with setting up a Firebase project, click [here](https://firebase.google.com/docs/android/setup)
 2. Generate the `service-account-file.json` file for your project:
 - Go to the Firebase Console: Open your web browser and navigate to the Firebase Console.
 - Select your project: From the project list, select the project for which you need the service account file.

@@ -13,20 +13,20 @@
     </title>
   </head>
   <body>
-        <div class='container'>
-          <div class="logo">
-            <img class="logoExt" src="{% static 'media/MingSecLogoExtensionBW.png' %}" alt="Ming Sec Logo Left">
-            <img class="logoMain" src="{% static 'media/MingSecLogoBW.png' %}" alt="Ming Sec Logo">
-            <img class="logoExt" src="{% static 'media/MingSecLogoExtensionBW.png' %}" alt="Ming Sec Logo Right">
-        </div>
-        <div id="themes" class="themes">
-            <p>Theme:</p>
-            <button onclick="setTheme('green')">Green</button>
-            <button onclick="setTheme('light')">Light</button>
-            <button onclick="setTheme('dark')">Dark</button>
-        </div>
-        {% block content %}
-        {% endblock %}
+    <div class='container'>
+      <div class="logo">
+          <img class="logoExt" src="{% static 'media/MingSecLogoExtensionBW.png' %}" alt="Ming Sec Logo Left">
+          <img class="logoMain" src="{% static 'media/MingSecLogoBW.png' %}" alt="Ming Sec Logo">
+          <img class="logoExt" src="{% static 'media/MingSecLogoExtensionBW.png' %}" alt="Ming Sec Logo Right">
+      </div>
+      <div id="themes" class="themes">
+          <p>Theme:</p>
+          <button onclick="setTheme('green')">Green</button>
+          <button onclick="setTheme('light')">Light</button>
+          <button onclick="setTheme('dark')">Dark</button>
+      </div>
+      {% block content %}
+      {% endblock %}
     </div>
     <script src="{% static 'js/app.js' %}"></script>
   </body>
