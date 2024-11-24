@@ -1,6 +1,6 @@
 # MingSec
 
-![GitHub Badge](https://img.shields.io/badge/deployment-GitHub-black) ![pythonanywhere Badge](https://img.shields.io/badge/deployment-railway-lightblue)
+![GitHub Badge](https://img.shields.io/badge/deployment-GitHub-black) ![pythonanywhere Badge](https://img.shields.io/badge/deployment-pythonanywhere-lightblue)
 
 ![MingSec Logo](/core/frontend/static/media/MingSec.png)
 
