@@ -17,15 +17,16 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 
 ## Project Structure:
 
-- **docs/** - Contains a Single Page Application (SPA) for the project demo. (Coming soon)
+- **docs/** - Contains a Single Page Application (SPA) for the project demo.
 - **core/** - Includes the REST API and user interface for remote control and system management.
 - **local/** - Contains the MingSec application, including configuration files and local scripts.
 - **app/** - Contains the Kotlin notification app that receives alerts for triggered alarms.
 
 ## Installation Guides
 
-- [Local System Setup](Local/README.md): Steps to configure and run the local MingSec application.
+- [MingSec Demo](https://tmdstudios.github.io/MingSec/): A brief demo that showcases how MingSec works.
 - [Core Setup](core/README.md): Instructions for setting up the REST API and user interface.
+- [Local System Setup](Local/README.md): Steps to configure and run the local MingSec application.
 - [Kotlin App Setup](app/README.md): Guide for building and deploying the Kotlin notification app.
 
 ## License
@@ -44,8 +45,8 @@ MingSec is a basic home security system designed to leverage OpenCV for motion d
 
 [Study Room](https://github.com/TMDStudios/StudyRoom 'Study Room') - Open-source platform for students to improve their English vocabulary and grammar
 
-[Crypto Ledger](https://play.google.com/store/apps/details?id=com.tmdstudios.cryptoledgerkotlin 'Crypto Ledger') - Open-source app for tracking cryptocurrency trades
-
 [Game Room](https://github.com/TMDStudios/GameRoom 'Game Room') - A platform for educators to play games and/or review materials with their students
+
+[Road to Rage Demo](https://github.com/TMDStudios/rtr 'Road to Rage Demo') - Open-source demo of Road to Rage (a vertical shmup)
 
 [TMD Studios](https://tmdstudios.net 'TMD Studios') - A simple one-page website to showcase TMD Studios projects.
