@@ -80,6 +80,10 @@ class CameraSystem:
     LOG_FILE = config['log']['name']+strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.txt'
     LOG_FILE_DROPBOX_PATH = config['log']['dropbox_path']+strftime("%Y-%m-%d_%H-%M-%S", localtime())+'.txt'
 
+    # File Paths
+    DROPBOX_PATH = config['file_paths']['dropbox_path']
+    LOCAL_PATH = config['file_paths']['local_path']
+
     def __init__(self) -> None:
         load_dotenv()
         self.DROPBOX_APP_KEY = os.environ['DROPBOX_APP_KEY']
@@ -150,10 +154,6 @@ class CameraSystem:
         self.unsent_log = False
 
         # Dropbox vars
-        self.local_path = '.'
-        self.dropbox_log_path = ''
-        self.dropbox_img_path = ''
-        self.dropbox_video_path = ''
         self.unsent_images = []
         self.unsent_videos = []
         self.dropbox_handler = DropboxHandler(self.DROPBOX_APP_KEY, self.DROPBOX_APP_SECRET, self.DROPBOX_REFRESH_TOKEN, self.logger)
@@ -200,53 +200,57 @@ class CameraSystem:
                 return "EXTERNAL CAMERA ERROR"
         
     def dropbox_upload_log(self):
+        local_file_path = pathlib.Path(self.LOCAL_PATH) / self.LOG_FILE
         if self.dropbox_log_handler.connected:
-            local_file_path = pathlib.Path(self.local_path) / self.LOG_FILE
-            self.dropbox_log_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
+            result = self.dropbox_log_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
+            if result!="OK":
+                self.unsent_log = True
+                self.logger.error(f'Error uploading log to Dropbox: {local_file_path}. Result: {result}')
         else:
             self.unsent_log = True
-            self.logger.error(f'Error uploading log to Dropbox')
+            self.logger.error(f'Error uploading log to Dropbox: {self.LOG_FILE} (no connection)')
 
     def dropbox_upload_img(self):
+        local_file_path = pathlib.Path(self.LOCAL_PATH) / self.img_file_name
         if self.dropbox_handler.connected:
-            local_file_path = pathlib.Path(self.local_path) / self.img_file_name
-            self.dropbox_handler.upload_file(str(local_file_path), self.dropbox_img_path)
+            result = self.dropbox_handler.upload_file(str(local_file_path), self.DROPBOX_PATH+str(local_file_path))
+            if result!="OK":
+                self.unsent_images.append(local_file_path)
+                self.logger.error(f'Error uploading image to Dropbox: {local_file_path}. Result: {result}')
         else:
-            local_file_path = pathlib.Path(self.local_path) / self.img_file_name
             self.unsent_images.append(local_file_path)
-            self.logger.error(f'Error uploading image to Dropbox: {local_file_path}')
+            self.logger.error(f'Error uploading image to Dropbox: {local_file_path} (no connection)')
 
     def dropbox_upload_video(self):
+        local_file_path = pathlib.Path(self.LOCAL_PATH) / self.last_recording
         if self.dropbox_handler.connected:
-            local_file_path = pathlib.Path(self.local_path) / self.last_recording
-            self.dropbox_handler.upload_file(str(local_file_path), self.dropbox_video_path)
-            # if result!="OK":
-            #     self.unsent_videos.append(local_file_path)
-            #     self.logger.error(f'Error uploading video to Dropbox: {result}')
+            result = self.dropbox_handler.upload_file(str(local_file_path), self.DROPBOX_PATH+str(local_file_path))
+            if result!="OK":
+                self.unsent_videos.append(local_file_path)
+                self.logger.error(f'Error uploading video to Dropbox: {local_file_path}. Result: {result}')
         else:
-            local_file_path = pathlib.Path(self.local_path) / self.last_recording
             self.unsent_videos.append(local_file_path)
-            self.logger.error(f'Error uploading video to Dropbox: {local_file_path}')
+            self.logger.error(f'Error uploading video to Dropbox: {local_file_path} (no connection)')
 
     def dropbox_upload_unsent(self, type):
         if self.dropbox_handler.connected and self.dropbox_log_handler.connected:
             if type=='image':
                 self.logger.info(f"UPLOADING {len(self.unsent_images)} UNSENT IMAGES")
                 for i in self.unsent_images:
-                    local_file_path = pathlib.Path(self.local_path) / str(i)
+                    local_file_path = pathlib.Path(self.LOCAL_PATH) / str(i)
                     dpx_path = '/MingSec/'+str(i)
                     self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
                 self.unsent_images.clear()
             elif type=='video':
                 self.logger.info(f"UPLOADING {len(self.unsent_videos)} UNSENT VIDEOS")
                 for i in self.unsent_videos:
-                    local_file_path = pathlib.Path(self.local_path) / str(i)
+                    local_file_path = pathlib.Path(self.LOCAL_PATH) / str(i)
                     dpx_path = '/MingSec/'+str(i)
                     self.dropbox_handler.upload_file(str(local_file_path), dpx_path)
                 self.unsent_videos.clear()
             else:
                 self.logger.info(f"UPLOADING LOG")
-                local_file_path = pathlib.Path(self.local_path) / self.LOG_FILE
+                local_file_path = pathlib.Path(self.LOCAL_PATH) / self.LOG_FILE
                 self.dropbox_log_handler.upload_file(str(local_file_path), self.LOG_FILE_DROPBOX_PATH)
                 self.unsent_log = False
         else:
@@ -401,7 +405,6 @@ class CameraSystem:
                                     _, frame = self.cap.read()
                                     cv2.imwrite(self.img_file_name, frame)
                                     if len(self.img_file_name) > 0:
-                                        self.dropbox_img_path = '/MingSec/'+self.img_file_name
                                         if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
                                             self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
                                             self.upload_img_thread.start()
@@ -507,7 +510,6 @@ class CameraSystem:
     
     def upload_image_to_dropbox(self):
         if len(self.img_file_name) > 0:
-            self.dropbox_img_path = '/MingSec/'+self.img_file_name
             if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
                 self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
                 self.upload_img_thread.start()
@@ -541,7 +543,6 @@ class CameraSystem:
                     self.logger.warning(f"** ALARM TRIGGERED! RECORDING HAS STARTED. IMAGE HAS BEEN CAPTURED. **")
                     cv2.imwrite(self.img_file_name, frame)
                     if len(self.img_file_name) > 0:
-                        self.dropbox_img_path = '/MingSec/'+self.img_file_name
                         if self.upload_img_thread is None or not self.upload_img_thread.is_alive():
                             self.upload_img_thread = threading.Thread(target=self.dropbox_upload_img, daemon=True)
                             self.upload_img_thread.start()

@@ -99,6 +99,18 @@ hr {
     background-image: linear-gradient(to right, rgba(144, 238, 144, 0.2), rgba(144, 238, 144, 0.1), rgb(5, 10, 5));
     cursor: pointer;
 }
+.gitHub {
+    text-align: center;
+}
+.gitHub a {
+    text-decoration: none;
+    color: lightgreen;
+}
+.gitHub a:hover {
+    text-decoration: underline;
+    background-color: lightgreen;
+    color: rgb(5, 10, 5);
+}
 
 @media only screen and (max-width: 640px){
     body {
