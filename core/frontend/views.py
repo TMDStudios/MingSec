@@ -68,7 +68,7 @@ def login(request):
     return render(request, 'login.html', {'form': form})
 
 @login_required
-def submitCamRequest(request):
+def submit_cam_request(request):
     """Process the camera request form and save the request."""
     if request.method=='POST':
         form = CamRequestForm(request.POST)
@@ -78,8 +78,8 @@ def submitCamRequest(request):
             length = form.cleaned_data.get('length', 10) * 1000  # Defaults to 10 seconds if not provided
             ip = get_client_ip(request)
             
-            camRequest = CamRequest(type=cam_type, camera=camera, ip=ip, length=length)
-            camRequest.save()
+            cam_request = CamRequest(type=cam_type, camera=camera, ip=ip, length=length)
+            cam_request.save()
             return JsonResponse({'message': 'Camera request submitted successfully!'})
         else:
             return JsonResponse({'message': 'Failed to submit request. Invalid form.'}, status=400)

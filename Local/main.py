@@ -413,7 +413,7 @@ class CameraSystem:
 
                         if request_data['time']>self.last_vid_upload_time:
                             try:
-                                self.video_length = int(request_data['length'])*self.TIME_CONVERSION_MULTIPLIER
+                                self.video_length = int(request_data['length'])
                                 # Limit requested video length to 1 minute
                                 if self.video_length > self.MAX_VIDEO_LENGTH:
                                     self.video_length = self.MAX_VIDEO_LENGTH

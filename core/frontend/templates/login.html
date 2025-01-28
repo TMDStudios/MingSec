@@ -14,11 +14,11 @@
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div>
-                    <label for="id_cam_type">Username:</label>
+                    <label for="username">Username:</label>
                     <div class="input">{{ form.username }}</div>
                 </div>
                 <div>
-                    <label for="id_cam_type">Password:</label>
+                    <label for="username">Password:</label>
                     <div class="input">{{ form.password }}</div>
                 </div>
                 <div>
@@ -29,5 +29,5 @@
     </div>
 {% endblock %}
 {% block scripts %}
-    <script src="{% static 'js/app.js' %}"></script>  {# Load your JavaScript file here #}
+    <script src="{% static 'js/app.js' %}"></script>
 {% endblock %}

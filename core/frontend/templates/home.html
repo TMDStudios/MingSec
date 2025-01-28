@@ -11,15 +11,15 @@
                 <form id="camRequestForm" method="POST" action="/request/">
                     {% csrf_token %}
                     <div>
-                        <label for="id_cam_type">Request Type:</label>
+                        <label for="cam_type">Request Type:</label>
                         <div class="input">{{ form.cam_type }}</div>
                     </div>
                     <div>
-                        <label for="id_camera">Select Camera:</label>
+                        <label for="camera">Select Camera:</label>
                         <div class="input">{{ form.camera }}</div>
                     </div>
                     <div>
-                        <label for="id_length">Video Length:</label>
+                        <label for="length">Video Length:</label>
                         <div class="input">{{ form.length }}</div>
                     </div>
                     <div>
@@ -61,5 +61,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{% static 'js/app.js' %}"></script>  {# Load your JavaScript file here #}
+    <script src="{% static 'js/app.js' %}"></script>
 {% endblock %}
